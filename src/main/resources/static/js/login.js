@@ -4,6 +4,24 @@
  */
 
 /**
+ * 切换密码显示/隐藏
+ * @param {string} inputId - 密码输入框的ID
+ * @param {HTMLElement} spanElement - 切换按钮元素（span）
+ */
+function togglePassword(inputId, spanElement) {
+    const input = document.getElementById(inputId);
+    if (input) {
+        if (input.type === 'password') {
+            input.type = 'text';
+            spanElement.innerHTML = '<i class="fa fa-eye-slash"></i>';
+        } else {
+            input.type = 'password';
+            spanElement.innerHTML = '<i class="fa fa-eye"></i>';
+        }
+    }
+}
+
+/**
  * 初始化登录表单
  */
 function initLoginForm() {
@@ -30,8 +48,29 @@ function handleLoginSubmit(e) {
         return;
     }
     
-    alert('登录成功！');
-    window.location.href = 'index.html';
+    // 调用后端登录接口
+    fetch('/api/v1/admin/login', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ username, password })
+    })
+    .then(response => {
+        if (response.ok) {
+            return response.json();
+        }
+        throw new Error('用户名或密码错误');
+    })
+    .then(data => {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('username', data.username);
+        localStorage.setItem('avatar', data.avatar || '/image/logo_path.jpg');
+        window.location.href = 'admin.html';
+    })
+    .catch(error => {
+        alert(error.message);
+    });
 }
 
 /**

@@ -20,19 +20,38 @@ public class CompanionController {
     
     @GetMapping("/companions")
     public ResponseEntity<Map<String, Object>> getCompanions(
-            @RequestParam(required = false) String gameType) {
+            @RequestParam(required = false) String gameType,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
         
-        List<Companion> companions;
+        List<Companion> allCompanions;
         if (gameType != null && !gameType.isEmpty()) {
-            companions = companionRepository.findByGameTypeAndIsOnlineTrue(gameType);
+            // 使用包含查询，支持逗号分隔的多个游戏类型
+            allCompanions = companionRepository.findByGameTypesContainingAndIsOnlineTrue(gameType);
         } else {
-            companions = companionRepository.findByIsOnlineTrue();
+            allCompanions = companionRepository.findByIsOnlineTrue();
+        }
+        
+        // 手动分页
+        int total = allCompanions.size();
+        int fromIndex = (page - 1) * size;
+        int toIndex = Math.min(fromIndex + size, total);
+        
+        List<Companion> pagedCompanions;
+        if (fromIndex < total) {
+            pagedCompanions = allCompanions.subList(fromIndex, toIndex);
+        } else {
+            pagedCompanions = List.of(); // 空列表
         }
         
         Map<String, Object> response = new HashMap<>();
         response.put("code", 200);
         response.put("message", "success");
-        response.put("data", companions);
+        response.put("data", pagedCompanions);
+        response.put("total", total);
+        response.put("page", page);
+        response.put("size", size);
+        response.put("hasMore", toIndex < total);
         
         return ResponseEntity.ok(response);
     }

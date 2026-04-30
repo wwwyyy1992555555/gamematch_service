@@ -43,7 +43,7 @@
     <header class="fixed top-0 left-0 right-0 z-40 transition-all duration-300" id="navbar">
         <div class="container mx-auto px-4 py-4 flex justify-between items-center">
             <a href="index.html" class="flex items-center space-x-2">
-                <img src="image/logo.png" alt="Logo" class="h-10 w-10 logo-container">
+                <img src="image/logo_path.jpg" alt="Logo" class="h-10 w-10 logo-container">
                 <span class="text-xl font-bold tracking-tight">陪玩<span class="text-primary">达人</span></span>
             </a>
             
@@ -62,7 +62,7 @@
         <!-- Background -->
         <div class="absolute inset-0 -z-10">
             <div class="absolute inset-0 bg-gradient-to-br from-black/70 to-black/40 -z-10"></div>
-            <img src="image/hero-bg.jpg" alt="Background" class="w-full h-full object-cover">
+            <img src="image/background_image.jpg" alt="Background" class="w-full h-full object-cover">
         </div>
 
         <div class="w-full max-w-md">
@@ -71,7 +71,7 @@
                 <!-- Logo -->
                 <div class="text-center mb-8">
                     <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-xl shadow-lg mb-4 overflow-hidden logo-container">
-                        <img src="image/logo.png" alt="Logo" class="logo-img">
+                        <img src="image/logo_path.jpg" alt="Logo" class="logo-img">
                     </div>
                     <h1 class="text-2xl font-bold text-gray-800 dark:text-white">欢迎回来</h1>
                     <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">登录您的账号</p>
@@ -92,7 +92,12 @@
                         <label class="form-label">
                             <i class="fa fa-lock"></i>密码
                         </label>
-                        <input type="password" name="password" class="input-field" placeholder="请输入密码" required>
+                        <div style="position: relative; display: flex; align-items: center;">
+                            <input type="password" name="password" id="loginPassword" class="input-field" style="padding-right: 40px;" placeholder="请输入密码" required>
+                            <span onclick="var inp=document.getElementById('loginPassword');var ico=this.querySelector('i');inp.type=inp.type=='password'?'text':'password';ico.className=inp.type=='password'?'fa fa-unlock-alt':'fa fa-lock';" style="position: absolute; right: 12px; cursor: pointer; color: #9ca3af; font-size: 16px; line-height: 1;">
+                                <i class="fa fa-unlock-alt"></i>
+                            </span>
+                        </div>
                     </div>
 
                     <!-- Remember & Forgot -->

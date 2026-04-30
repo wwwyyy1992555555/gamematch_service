@@ -17,11 +17,11 @@ public class Companion {
     private String avatar;
     
     @Column(nullable = false)
-    private String gameType;
+    private String gameTypes; // 多个游戏类型，逗号分隔
     
-    private String rank;
+    private String ranks; // 多个段位，逗号分隔
     
-    private String server;
+    private String servers; // 多个服务器，逗号分隔
     
     @Column(nullable = false)
     private Double price;
@@ -51,7 +51,7 @@ public class Companion {
             isOnline = true;
         }
         if (rating == null) {
-            rating = 5.0;
+            rating = 100.0;
         }
     }
     
@@ -85,28 +85,28 @@ public class Companion {
         this.avatar = avatar;
     }
     
-    public String getGameType() {
-        return gameType;
+    public String getGameTypes() {
+        return gameTypes;
     }
     
-    public void setGameType(String gameType) {
-        this.gameType = gameType;
+    public void setGameTypes(String gameTypes) {
+        this.gameTypes = gameTypes;
     }
     
-    public String getRank() {
-        return rank;
+    public String getRanks() {
+        return ranks;
     }
     
-    public void setRank(String rank) {
-        this.rank = rank;
+    public void setRanks(String ranks) {
+        this.ranks = ranks;
     }
     
-    public String getServer() {
-        return server;
+    public String getServers() {
+        return servers;
     }
     
-    public void setServer(String server) {
-        this.server = server;
+    public void setServers(String servers) {
+        this.servers = servers;
     }
     
     public Double getPrice() {

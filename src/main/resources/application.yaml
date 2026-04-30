@@ -3,19 +3,29 @@ spring:
     name: gamematch_service
   
   datasource:
-    url: jdbc:h2:file:./data/gamematch
+    # 文件模式（持久化）- 数据保存到 data/gamematch.mv.db 文件
+    url: jdbc:h2:file:./data/gamematch;DB_CLOSE_DELAY=-1;MODE=MySQL;DATABASE_TO_UPPER=false
+    # 内存模式（不持久化）- 每次启动都是全新数据库
+    #url: jdbc:h2:mem:gamematch;DB_CLOSE_DELAY=-1;MODE=MySQL;DATABASE_TO_UPPER=false
     driver-class-name: org.h2.Driver
     username: sa
-    password: 
-  
+    password:
+    
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: none
     show-sql: true
     properties:
       hibernate:
         format_sql: true
         dialect: org.hibernate.dialect.H2Dialect
+    
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:db/init.sql
+      data-locations: classpath:db/init-data.sql
+      continue-on-error: false
   
   h2:
     console:
@@ -30,6 +40,19 @@ spring:
 server:
   port: 8080
 
+# 日志配置
+logging:
+  level:
+    root: WARN
+    com.uogproject.gamematch_service: DEBUG
+    org.springframework.web: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/gamematch.log
+    max-size: 50MB
+    max-history: 90
+
 # 文件上传配置
 app:
-  upload-dir: ./uploads
+  upload-dir: ./src/main/resources/static/image

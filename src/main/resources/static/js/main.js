@@ -1,3 +1,45 @@
+/**
+ * 统一的图片错误处理函数
+ * @param {HTMLImageElement} img - 图片元素
+ * @param {string} placeholderText - 占位符文本（可选，默认'无'）
+ * @param {boolean} showPlaceholder - 是否显示占位符（true=显示灰色圆形占位符，false=仅隐藏）
+ */
+function handleImageError(img, placeholderText = '无', showPlaceholder = true) {
+    if (!img) return;
+    
+    // 隐藏破损的图片
+    img.style.display = 'none';
+    
+    // 如果需要显示占位符
+    if (showPlaceholder) {
+        // 检查是否已经有占位符
+        let placeholder = img.nextElementSibling;
+        if (!placeholder || !placeholder.classList.contains('image-placeholder')) {
+            // 创建占位符
+            placeholder = document.createElement('div');
+            placeholder.className = 'image-placeholder';
+            placeholder.style.cssText = `
+                width: ${img.style.width || '40px'};
+                height: ${img.style.height || '40px'};
+                border-radius: 50%;
+                background-color: #f3f4f6;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #9ca3af;
+                font-size: 12px;
+            `;
+            placeholder.textContent = placeholderText;
+            
+            // 插入到图片后面
+            img.parentNode.insertBefore(placeholder, img.nextSibling);
+        } else {
+            // 显示已有的占位符
+            placeholder.style.display = 'flex';
+        }
+    }
+}
+
 tailwind.config = {
     darkMode: 'class',
     theme: {
@@ -30,86 +72,89 @@ document.addEventListener('DOMContentLoaded', function() {
         once: true
     });
 
+    // 加载系统配置（动态设置背景图片和公司信息）
+    loadSystemConfig();
+
     const projects = [
         {
             id: 1,
-            title: "移动应用UI设计",
-            category: "UI/UX设计",
-            image: "https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/b956b28200804ab58c65c339b8a81861~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=2026040416222170BADBD524E81C6E41B0&rrcfp=f06b921b&x-expires=1777882967&x-signature=tLV2VMhBnqfxgfCy0j5g3HYpp6A%3D",
-            description: "现代简约风格的移动应用UI设计，配以色彩鲜明的强调元素和直观的导航。该项目专注于通过简洁的界面和精心设计的交互创造无缝的用户体验。",
+            title: "王者荣耀精彩操作",
+            category: "王者荣耀",
+            image: "image/project1.jpg",
+            description: "S35赛季王者段位精彩操作集锦，展示各种高光时刻和极限操作。",
             details: [
-                "用户研究和角色设定",
-                "线框图和低保真原型设计",
-                "带有交互元素的高保真UI设计",
-                "用户测试和迭代优化"
+                "国服最强李白实战演示",
+                "高端局意识与节奏把控",
+                "极限反杀与团战收割",
+                "专业陪玩服务体验"
             ],
-            technologies: ["Figma", "Adobe XD", "Sketch", "Principle"],
-            date: "2025年6月",
-            client: "科技初创公司"
+            technologies: ["王者荣耀", "iOS", "安卓", "全英雄精通"],
+            date: "2026年4月",
+            client: "陪玩达人平台"
         },
         {
             id: 2,
-            title: "城市景观摄影",
-            category: "摄影",
-            image: "https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/e3494d22c7c140048484aa0f2bc04ee9~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=2026040416222170BADBD524E81C6E41B0&rrcfp=f06b921b&x-expires=1777882959&x-signature=HEkX%2FEECzcd%2FRQ5a5aUFvDqcFs8%3D",
-            description: "黑白城市景观摄影集，捕捉城市建筑的戏剧性结构和光影效果。这个系列探索了自然光与城市结构之间的关系。",
+            title: "英雄联盟高光时刻",
+            category: "英雄联盟",
+            image: "image/project2.jpg",
+            description: "峡谷之巅超凡大师段位精彩操作，劫、亚索等英雄的完美连招展示。",
             details: [
-                "从黎明到黄昏的城市风光摄影",
-                "长曝光技术创造动态模糊效果",
-                "建筑细节和构图",
-                "黑白后期处理"
+                "中单刺客极致操作",
+                "对线压制与游走支援",
+                "团战切入与时机把握",
+                "高分段排位实战教学"
             ],
-            technologies: ["佳能EOS R5", "广角镜头", "Lightroom", "Photoshop"],
-            date: "2025年4月",
-            client: "城市印刷画廊"
+            technologies: ["英雄联盟", "PC端", "多位置精通", "战术指导"],
+            date: "2026年4月",
+            client: "陪玩达人平台"
         },
         {
             id: 3,
-            title: "奇幻数字插画",
-            category: "插画",
-            image: "https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/09e8de031da44b17af8bfe7bad75a996~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=2026040416222170BADBD524E81C6E41B0&rrcfp=f06b921b&x-expires=1777882964&x-signature=5lvLrXg9mAIjACiYLBPwRVaO1Nw%3D",
-            description: "以奇幻为主题的创意数字插画，展现鲜艳的色彩和魔幻元素。这幅作品是为一本书的封面创作的，探索了奇幻与现实的交汇点。",
+            title: "绝地求生击杀集锦",
+            category: "绝地求生",
+            image: "image/project3.jpg",
+            description: "海岛雨林地图多次皇冠局四排击杀集锦，枪法精准意识一流。",
             details: [
-                "概念开发和草图设计",
-                "数字绘画技巧",
-                "色彩理论和氛围营造",
-                "出版用最终 artwork"
+                "98K/AWM狙击精准爆头",
+                "近距离刚枪身法秀",
+                "决赛圈运营与决策",
+                "团队配合与指挥"
             ],
-            technologies: ["Procreate", "Photoshop", "Clip Studio Paint", "Wacom Cintiq"],
-            date: "2025年3月",
-            client: "奇幻书籍出版社"
+            technologies: ["PUBG", "PC端", "多地图精通", "战术分析"],
+            date: "2026年3月",
+            client: "陪玩达人平台"
         },
         {
             id: 4,
-            title: "暗黑模式仪表盘",
-            category: "网页设计",
-            image: "https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/fd7b521a9e5b4333917cc1a850a49f24~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=2026040416222170BADBD524E81C6E41B0&rrcfp=f06b921b&x-expires=1777882960&x-signature=moU722FeDiP%2BXGQ9yvbbkhnOwQ0%3D",
-            description: "专业网页设计模型，展示带有分析和用户统计功能的暗黑模式仪表盘。该项目专注于创建视觉吸引力强且功能完善的数据可视化界面。",
+            title: "永劫无间天梯对战",
+            category: "其他游戏",
+            image: "image/project4.jpg",
+            description: "火罗国修罗段位实战演示，刀法身法展现极致操作。",
             details: [
-                "数据可视化的用户界面设计",
-                "仪表盘布局和组件设计",
-                "暗黑模式配色方案实现",
-                "交互式图表和图形设计"
+                "振刀博弈与心理战",
+                "连招组合与武器切换",
+                "地形利用与跑图技巧",
+                "多人竞技策略分享"
             ],
-            technologies: ["Figma", "Adobe Illustrator", "Chart.js", "HTML/CSS"],
-            date: "2025年5月",
-            client: "分析专业公司"
+            technologies: ["永劫无间", "PC端", "全英雄熟练", "身法教学"],
+            date: "2026年3月",
+            client: "陪玩达人平台"
         },
         {
             id: 5,
-            title: "创意人像摄影",
-            category: "摄影",
-            image: "https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/d10ac5dff6eb4ebc9962cca05fa5238d~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=2026040416222170BADBD524E81C6E41B0&rrcfp=f06b921b&x-expires=1777882958&x-signature=XafzqHP1vnayeu7%2B0%2B9giZs6HOw%3D",
-            description: "以中性背景和自然光线拍摄的创意人士专业人像摄影。本次拍摄旨在通过精心的构图捕捉 subjects的个性和创意精神。",
+            title: "蛋仔派对趣味时刻",
+            category: "其他游戏",
+            image: "image/project5.jpg",
+            description: "欢乐蛋仔闯关集锦，各类趣味玩法和搞笑瞬间合集。",
             details: [
-                "工作室人像摄影",
-                "自然光线技巧",
-                "构图和取景",
-                "后期处理和修饰"
+                "高难度关卡速通技巧",
+                "乐园创意地图游玩",
+                "双人/四人组队乐趣",
+                "轻松休闲社交互动"
             ],
-            technologies: ["索尼A7R IV", "人像镜头", "Lightroom", "Capture One"],
-            date: "2025年2月",
-            client: "创意专业人士杂志"
+            technologies: ["蛋仔派对", "移动端", "休闲竞技", "娱乐陪玩"],
+            date: "2026年2月",
+            client: "陪玩达人平台"
         }
     ];
 
@@ -323,83 +368,83 @@ function openProjectModal(projectId) {
     const projects = [
         {
             id: 1,
-            title: "移动应用UI设计",
-            category: "UI/UX设计",
-            image: "https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/b956b28200804ab58c65c339b8a81861~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=2026040416222170BADBD524E81C6E41B0&rrcfp=f06b921b&x-expires=1777882967&x-signature=tLV2VMhBnqfxgfCy0j5g3HYpp6A%3D",
-            description: "现代简约风格的移动应用UI设计，配以色彩鲜明的强调元素和直观的导航。该项目专注于通过简洁的界面和精心设计的交互创造无缝的用户体验。",
+            title: "王者荣耀精彩操作",
+            category: "王者荣耀",
+            image: "image/project1.jpg",
+            description: "S35赛季王者段位精彩操作集锦，展示各种高光时刻和极限操作。",
             details: [
-                "用户研究和角色设定",
-                "线框图和低保真原型设计",
-                "带有交互元素的高保真UI设计",
-                "用户测试和迭代优化"
+                "国服最强李白实战演示",
+                "高端局意识与节奏把控",
+                "极限反杀与团战收割",
+                "专业陪玩服务体验"
             ],
-            technologies: ["Figma", "Adobe XD", "Sketch", "Principle"],
-            date: "2025年6月",
-            client: "科技初创公司"
+            technologies: ["王者荣耀", "iOS", "安卓", "全英雄精通"],
+            date: "2026年4月",
+            client: "陪玩达人平台"
         },
         {
             id: 2,
-            title: "城市景观摄影",
-            category: "摄影",
-            image: "https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/e3494d22c7c140048484aa0f2bc04ee9~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=2026040416222170BADBD524E81C6E41B0&rrcfp=f06b921b&x-expires=1777882959&x-signature=HEkX%2FEECzcd%2FRQ5a5aUFvDqcFs8%3D",
-            description: "黑白城市景观摄影集，捕捉城市建筑的戏剧性结构和光影效果。这个系列探索了自然光与城市结构之间的关系。",
+            title: "英雄联盟高光时刻",
+            category: "英雄联盟",
+            image: "image/project2.jpg",
+            description: "峡谷之巅超凡大师段位精彩操作，劫、亚索等英雄的完美连招展示。",
             details: [
-                "从黎明到黄昏的城市风光摄影",
-                "长曝光技术创造动态模糊效果",
-                "建筑细节和构图",
-                "黑白后期处理"
+                "中单刺客极致操作",
+                "对线压制与游走支援",
+                "团战切入与时机把握",
+                "高分段排位实战教学"
             ],
-            technologies: ["佳能EOS R5", "广角镜头", "Lightroom", "Photoshop"],
-            date: "2025年4月",
-            client: "城市印刷画廊"
+            technologies: ["英雄联盟", "PC端", "多位置精通", "战术指导"],
+            date: "2026年4月",
+            client: "陪玩达人平台"
         },
         {
             id: 3,
-            title: "奇幻数字插画",
-            category: "插画",
-            image: "https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/09e8de031da44b17af8bfe7bad75a996~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=2026040416222170BADBD524E81C6E41B0&rrcfp=f06b921b&x-expires=1777882964&x-signature=5lvLrXg9mAIjACiYLBPwRVaO1Nw%3D",
-            description: "以奇幻为主题的创意数字插画，展现鲜艳的色彩和魔幻元素。这幅作品是为一本书的封面创作的，探索了奇幻与现实的交汇点。",
+            title: "绝地求生击杀集锦",
+            category: "绝地求生",
+            image: "image/project3.jpg",
+            description: "海岛雨林地图多次皇冠局四排击杀集锦，枪法精准意识一流。",
             details: [
-                "概念开发和草图设计",
-                "数字绘画技巧",
-                "色彩理论和氛围营造",
-                "出版用最终 artwork"
+                "98K/AWM狙击精准爆头",
+                "近距离刚枪身法秀",
+                "决赛圈运营与决策",
+                "团队配合与指挥"
             ],
-            technologies: ["Procreate", "Photoshop", "Clip Studio Paint", "Wacom Cintiq"],
-            date: "2025年3月",
-            client: "奇幻书籍出版社"
+            technologies: ["PUBG", "PC端", "多地图精通", "战术分析"],
+            date: "2026年3月",
+            client: "陪玩达人平台"
         },
         {
             id: 4,
-            title: "暗黑模式仪表盘",
-            category: "网页设计",
-            image: "https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/fd7b521a9e5b4333917cc1a850a49f24~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=2026040416222170BADBD524E81C6E41B0&rrcfp=f06b921b&x-expires=1777882960&x-signature=moU722FeDiP%2BXGQ9yvbbkhnOwQ0%3D",
-            description: "专业网页设计模型，展示带有分析和用户统计功能的暗黑模式仪表盘。该项目专注于创建视觉吸引力强且功能完善的数据可视化界面。",
+            title: "永劫无间天梯对战",
+            category: "其他游戏",
+            image: "image/project4.jpg",
+            description: "火罗国修罗段位实战演示，刀法身法展现极致操作。",
             details: [
-                "数据可视化的用户界面设计",
-                "仪表盘布局和组件设计",
-                "暗黑模式配色方案实现",
-                "交互式图表和图形设计"
+                "振刀博弈与心理战",
+                "连招组合与武器切换",
+                "地形利用与跑图技巧",
+                "多人竞技策略分享"
             ],
-            technologies: ["Figma", "Adobe Illustrator", "Chart.js", "HTML/CSS"],
-            date: "2025年5月",
-            client: "分析专业公司"
+            technologies: ["永劫无间", "PC端", "全英雄熟练", "身法教学"],
+            date: "2026年3月",
+            client: "陪玩达人平台"
         },
         {
             id: 5,
-            title: "创意人像摄影",
-            category: "摄影",
-            image: "https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/d10ac5dff6eb4ebc9962cca05fa5238d~tplv-a9rns2rl98-image.image?lk3s=8e244e95&rcl=2026040416222170BADBD524E81C6E41B0&rrcfp=f06b921b&x-expires=1777882958&x-signature=XafzqHP1vnayeu7%2B0%2B9giZs6HOw%3D",
-            description: "以中性背景和自然光线拍摄的创意人士专业人像摄影。本次拍摄旨在通过精心的构图捕捉 subjects的个性和创意精神。",
+            title: "蛋仔派对趣味时刻",
+            category: "其他游戏",
+            image: "image/project5.jpg",
+            description: "欢乐蛋仔闯关集锦，各类趣味玩法和搞笑瞬间合集。",
             details: [
-                "工作室人像摄影",
-                "自然光线技巧",
-                "构图和取景",
-                "后期处理和修饰"
+                "高难度关卡速通技巧",
+                "乐园创意地图游玩",
+                "双人/四人组队乐趣",
+                "轻松休闲社交互动"
             ],
-            technologies: ["索尼A7R IV", "人像镜头", "Lightroom", "Capture One"],
-            date: "2025年2月",
-            client: "创意专业人士杂志"
+            technologies: ["蛋仔派对", "移动端", "休闲竞技", "娱乐陪玩"],
+            date: "2026年2月",
+            client: "陪玩达人平台"
         }
     ];
 
@@ -445,5 +490,56 @@ function openProjectModal(projectId) {
             modal.classList.remove('active');
             document.body.style.overflow = '';
         });
+    }
+}
+
+/**
+ * 获取缩略图路径
+ * @param {string} originalUrl - 原图路径
+ * @returns {string} 缩略图路径
+ */
+function getPreviewUrl(originalUrl) {
+    if (!originalUrl) return '';
+    const dotIndex = originalUrl.lastIndexOf('.');
+    if (dotIndex > 0) {
+        const name = originalUrl.substring(0, dotIndex);
+        const extension = originalUrl.substring(dotIndex);
+        return name + '_thumb' + extension;
+    }
+    return originalUrl + '_thumb.jpg';
+}
+
+/**
+ * 加载系统配置
+ */
+async function loadSystemConfig() {
+    try {
+        const response = await fetch('/api/v1/admin/config');
+        if (response.ok) {
+            const configs = await response.json();
+            
+            // 动态设置hero区域背景图片（使用缩略图）
+            if (configs.background_image) {
+                const heroBackground = document.getElementById('hero-background');
+                if (heroBackground) {
+                    const previewUrl = getPreviewUrl(configs.background_image);
+                    heroBackground.src = previewUrl;
+                }
+            }
+            
+            // 动态设置公司名称和描述
+            if (configs.company_name) {
+                document.title = configs.company_name + ' - 专业游戏陪玩服务';
+            }
+            
+            if (configs.company_description) {
+                const heroDescription = document.getElementById('hero-description');
+                if (heroDescription) {
+                    heroDescription.textContent = configs.company_description;
+                }
+            }
+        }
+    } catch (error) {
+        console.error('加载系统配置失败:', error);
     }
 }
