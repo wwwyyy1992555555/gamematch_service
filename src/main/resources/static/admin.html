@@ -112,9 +112,10 @@
                             <tr>
                                 <th>头像</th>
                                 <th>昵称</th>
+                                <th>标签</th>
+                                <th>价格</th>
                                 <th>游戏类型</th>
-                                <th>星级</th>
-                                <th>状态</th>
+                                <th>评分</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
@@ -161,9 +162,20 @@
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title">管理员列表</h2>
-                        <button class="btn btn-primary" onclick="openModal('addAdmin')">
-                            <i class="fa fa-plus"></i>添加管理员
-                        </button>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <div style="position: relative;">
+                                <input type="text" id="adminSearchInput" placeholder="搜索用户名..." style="padding: 8px 32px 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px; width: 200px; outline: none;" onkeypress="if(event.key==='Enter') searchAdmin()" onblur="searchAdmin()">
+                                <button onclick="clearAdminSearch()" id="adminSearchClearBtn" style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #9ca3af; font-size: 14px; padding: 0; display: none; line-height: 1; width: 14px; height: 14px;" onmouseover="this.style.color='#6b7280'" onmouseout="this.style.color='#9ca3af'" title="清空搜索">
+                                    <div style="position: relative; width: 100%; height: 100%;">
+                                        <div style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1px; background: currentColor; transform: translate(-50%, -50%) rotate(45deg);"></div>
+                                        <div style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1px; background: currentColor; transform: translate(-50%, -50%) rotate(-45deg);"></div>
+                                    </div>
+                                </button>
+                            </div>
+                            <button class="btn btn-primary" onclick="openModal('addAdmin')">
+                                <i class="fa fa-plus"></i>添加管理员
+                            </button>
+                        </div>
                     </div>
                     
                     <table class="table">

@@ -4,6 +4,7 @@ body {
     min-height: 100vh;
     background: white;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow: hidden; /* 防止body滚动，让content-area作为滚动容器 */
 }
 
 .sidebar {
@@ -147,9 +148,10 @@ body {
 
 .content-area {
     padding: 24px;
-    /* 确保内容区域可以滚动 */
-    overflow-y: auto;
+    /* 内容区域作为滚动容器，始终显示滚动条避免宽度抖动 */
+    overflow-y: scroll;
     -webkit-overflow-scrolling: touch; /* iOS平滑滚动 */
+    height: calc(100vh - 73px); /* 减去top-bar的高度 */
 }
 
 .card {
@@ -490,8 +492,9 @@ body {
 @media (max-width: 768px) {
     .content-area {
         padding: 16px;
-        /* 移动端优化滚动 */
-        max-height: calc(100vh - 120px); /* 减去顶部栏高度 */
+        /* 移动端内容区域作为滚动容器 */
+        overflow-y: scroll;
+        height: calc(100vh - 73px); /* 减去top-bar的高度 */
     }
     
     /* 表格容器支持横向和纵向滚动 */

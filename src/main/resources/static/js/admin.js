@@ -536,13 +536,19 @@ function appendCompanionTable(companions) {
     
     companions.forEach(companion => {
         const tr = document.createElement('tr');
-        const avatar = companion.avatar || ''; // 没有头像时显示空
+        const avatar = companion.avatar || '';
+        const tags = companion.tags || '-';
+        const price = companion.price ? `¥${companion.price}` : '-';
         const gameTypes = companion.gameTypes || '-';
+        const rating = companion.rating ? companion.rating.toFixed(1) : '-';
 
         tr.innerHTML = `
             <td>${avatar ? `<img src="${avatar}" alt="头像" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" onerror="handleImageError(this)">` : '<div style="width: 40px; height: 40px; border-radius: 50%; background-color: #f3f4f6; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 12px;">无</div>'}</td>
             <td>${escapeHtml(companion.nickname)}</td>
+            <td>${escapeHtml(tags)}</td>
+            <td>${price}</td>
             <td>${escapeHtml(gameTypes)}</td>
+            <td>${rating}</td>
             <td>
                 <button class="btn-icon" onclick="editCompanion(${companion.id})" title="编辑">
                     <i class="fa fa-pencil"></i>
@@ -559,7 +565,7 @@ function appendCompanionTable(companions) {
     if (companionHasMore) {
         const loadingTr = document.createElement('tr');
         loadingTr.className = 'loading-row';
-        loadingTr.innerHTML = '<td colspan="4" style="text-align: center; padding: 20px; color: #999;">加载中...</td>';
+        loadingTr.innerHTML = '<td colspan="7" style="text-align: center; padding: 20px; color: #999;">加载中...</td>';
         tbody.appendChild(loadingTr);
     }
 }
@@ -575,19 +581,25 @@ function renderCompanionTable(companions) {
     tbody.innerHTML = '';
 
     if (!companions || companions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: #999;">暂无陪玩师数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #999;">暂无陪玩师数据</td></tr>';
         return;
     }
 
     companions.forEach(companion => {
         const tr = document.createElement('tr');
-        const avatar = companion.avatar || ''; // 没有头像时显示空
+        const avatar = companion.avatar || '';
+        const tags = companion.tags || '-';
+        const price = companion.price ? `¥${companion.price}` : '-';
         const gameTypes = companion.gameTypes || '-';
+        const rating = companion.rating ? companion.rating.toFixed(1) : '-';
 
         tr.innerHTML = `
             <td>${avatar ? `<img src="${avatar}" alt="头像" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" onerror="handleImageError(this)">` : '<div style="width: 40px; height: 40px; border-radius: 50%; background-color: #f3f4f6; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 12px;">无</div>'}</td>
             <td>${escapeHtml(companion.nickname)}</td>
+            <td>${escapeHtml(tags)}</td>
+            <td>${price}</td>
             <td>${escapeHtml(gameTypes)}</td>
+            <td>${rating}</td>
             <td>
                 <button class="btn-icon" onclick="editCompanion(${companion.id})" title="编辑">
                     <i class="fa fa-pencil"></i>
@@ -604,7 +616,7 @@ function renderCompanionTable(companions) {
     if (companionHasMore) {
         const loadingTr = document.createElement('tr');
         loadingTr.className = 'loading-row';
-        loadingTr.innerHTML = '<td colspan="4" style="text-align: center; padding: 20px; color: #999;">加载中...</td>';
+        loadingTr.innerHTML = '<td colspan="7" style="text-align: center; padding: 20px; color: #999;">加载中...</td>';
         tbody.appendChild(loadingTr);
     }
 }
@@ -1661,6 +1673,50 @@ function previewEditAdminAvatar(inputElement) {
     reader.readAsDataURL(file);
 }
 
+
+/**
+ * 搜索管理员
+ */
+async function searchAdmin() {
+    const username = document.getElementById('adminSearchInput').value.trim();
+    
+    try {
+        // 调用后端接口，传递用户名参数
+        const url = username ? `/api/v1/admin/admins?username=${encodeURIComponent(username)}` : '/api/v1/admin/admins';
+        const response = await fetch(url);
+        
+        if (response.ok) {
+            const admins = await response.json();
+            renderAdminTable(admins);
+        } else {
+            alert('搜索失败，请重试');
+        }
+    } catch (error) {
+        console.error('搜索管理员失败:', error);
+        alert('搜索失败，请检查网络连接');
+    }
+}
+
+/**
+ * 清空搜索并重新加载列表
+ */
+function clearAdminSearch() {
+    document.getElementById('adminSearchInput').value = '';
+    document.getElementById('adminSearchClearBtn').style.display = 'none';
+    loadAdminList();
+}
+
+// 监听搜索框输入，显示/隐藏清空按钮
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('adminSearchInput');
+    const clearBtn = document.getElementById('adminSearchClearBtn');
+    
+    if (searchInput && clearBtn) {
+        searchInput.addEventListener('input', function() {
+            clearBtn.style.display = this.value ? 'block' : 'none';
+        });
+    }
+});
 
 /**
  * 加载管理员列表
