@@ -22,14 +22,23 @@ public class CompanionController {
     public ResponseEntity<Map<String, Object>> getCompanions(
             @RequestParam(required = false) String gameType,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "true") boolean onlineOnly) {
         
         List<Companion> allCompanions;
         if (gameType != null && !gameType.isEmpty()) {
             // 使用包含查询，支持逗号分隔的多个游戏类型
-            allCompanions = companionRepository.findByGameTypesContainingAndIsOnlineTrue(gameType);
+            if (onlineOnly) {
+                allCompanions = companionRepository.findByGameTypesContainingAndIsOnlineTrue(gameType);
+            } else {
+                allCompanions = companionRepository.findByGameTypesContaining(gameType);
+            }
         } else {
-            allCompanions = companionRepository.findByIsOnlineTrue();
+            if (onlineOnly) {
+                allCompanions = companionRepository.findByIsOnlineTrue();
+            } else {
+                allCompanions = companionRepository.findAll();
+            }
         }
         
         // 手动分页

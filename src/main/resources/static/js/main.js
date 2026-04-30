@@ -75,6 +75,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // 加载系统配置（动态设置背景图片和公司信息）
     loadSystemConfig();
 
+    // 加载陪玩师列表
+    loadCompanionsList();
+
+    // 静态项目数据（已废弃，保留作为备用）
     const projects = [
         {
             id: 1,
@@ -223,30 +227,50 @@ document.addEventListener('DOMContentLoaded', function() {
     const projectCards = document.querySelectorAll('.project-card');
 
     filterButtons.forEach(button => {
-        button.addEventListener('click', function() {
+        button.addEventListener('click', async function() {
             filterButtons.forEach(btn => btn.classList.remove('active', 'bg-primary', 'text-white'));
 
             this.classList.add('active', 'bg-primary', 'text-white');
 
             const filter = this.getAttribute('data-filter');
-
-            projectCards.forEach(card => {
-                if (filter === 'all' || card.getAttribute('data-category') === filter) {
-                    card.style.display = 'block';
-                    setTimeout(() => {
-                        card.style.opacity = '1';
-                        card.style.transform = 'scale(1)';
-                    }, 100);
-                } else {
-                    card.style.opacity = '0';
-                    card.style.transform = 'scale(0.8)';
-                    setTimeout(() => {
-                        card.style.display = 'none';
-                    }, 300);
-                }
-            });
+            
+            // 从API加载对应游戏类型的陪玩师
+            await loadFilteredCompanions(filter);
         });
     });
+
+/**
+ * 加载筛选后的陪玩师列表
+ */
+async function loadFilteredCompanions(filter) {
+    try {
+        let url = '/api/v1/companions?page=1&size=20&onlineOnly=false';
+        
+        // 根据筛选条件添加游戏类型参数
+        if (filter !== 'all') {
+            const gameTypeMap = {
+                'ui': '王者荣耀',
+                'photography': '英雄联盟',
+                'illustration': '绝地求生',
+                'web': '其他游戏'
+            };
+            const gameType = gameTypeMap[filter];
+            if (gameType) {
+                url += `&gameType=${encodeURIComponent(gameType)}`;
+            }
+        }
+        
+        const response = await fetch(url);
+        if (response.ok) {
+            const result = await response.json();
+            if (result.code === 200 && result.data) {
+                renderCompanionsGrid(result.data);
+            }
+        }
+    } catch (error) {
+        console.error('加载筛选陪玩师列表失败:', error);
+    }
+}
 
     const modal = document.getElementById('project-modal');
     const closeModal = document.getElementById('close-modal');
@@ -541,5 +565,254 @@ async function loadSystemConfig() {
         }
     } catch (error) {
         console.error('加载系统配置失败:', error);
+    }
+}
+
+/**
+ * 加载陪玩师列表
+ */
+async function loadCompanionsList() {
+    try {
+        const response = await fetch('/api/v1/companions?page=1&size=20&onlineOnly=false');
+        if (response.ok) {
+            const result = await response.json();
+            if (result.code === 200 && result.data) {
+                renderCompanionsGrid(result.data);
+            }
+        }
+    } catch (error) {
+        console.error('加载陪玩师列表失败:', error);
+    }
+}
+
+/**
+ * 渲染陪玩师网格
+ */
+function renderCompanionsGrid(companions) {
+    const galleryGrid = document.querySelector('.gallery-grid');
+    if (!galleryGrid) return;
+
+    // 清空现有内容
+    galleryGrid.innerHTML = '';
+
+    if (!companions || companions.length === 0) {
+        galleryGrid.innerHTML = `
+            <div class="col-span-full text-center py-12">
+                <i class="fa fa-users text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                <p class="text-gray-500 dark:text-gray-400 text-lg">暂无陪玩师数据</p>
+            </div>
+        `;
+        return;
+    }
+
+    // 渲染每个陪玩师卡片
+    companions.forEach((companion, index) => {
+        const card = createCompanionCard(companion, index);
+        galleryGrid.appendChild(card);
+    });
+
+    // 重新初始化AOS动画
+    if (typeof AOS !== 'undefined') {
+        AOS.refresh();
+    }
+}
+
+/**
+ * 创建陪玩师卡片
+ */
+function createCompanionCard(companion, index) {
+    const card = document.createElement('div');
+    card.className = 'project-card group';
+    card.setAttribute('data-aos', 'fade-up');
+    card.setAttribute('data-aos-delay', (150 + index * 50).toString());
+
+    // 根据游戏类型设置分类
+    const gameTypes = companion.gameTypes ? companion.gameTypes.split(',') : [];
+    const firstGameType = gameTypes[0] || '其他游戏';
+    const categoryClass = getCategoryClass(firstGameType);
+    card.setAttribute('data-category', categoryClass);
+
+    // 处理头像路径，没有头像时使用Logo图片
+    const avatarUrl = companion.avatar || 'image/logo_path.jpg';
+
+    // 构建评分显示
+    const rating = companion.rating || 0;
+    const ratingDisplay = rating > 0 ? `${rating}分` : '暂无评分';
+
+    // 构建标签显示
+    const tags = companion.tags ? companion.tags.split(',').slice(0, 3) : [];
+    const tagsHtml = tags.map(tag => 
+        `<span class="inline-block bg-primary/20 text-primary px-2 py-1 rounded text-xs mr-1 mb-1">${tag.trim()}</span>`
+    ).join('');
+
+    card.innerHTML = `
+        <img src="${avatarUrl}" alt="${companion.nickname}" class="w-full h-64 object-cover transition-transform duration-500" onerror="handleImageError(this, '${companion.nickname.charAt(0)}', false)">
+        <div class="project-overlay">
+            <h3 class="text-xl font-bold text-white mb-2">${companion.nickname}</h3>
+            <p class="text-gray-200 mb-2 line-clamp-2">${companion.description || '暂无简介'}</p>
+            <div class="mb-2">
+                ${tagsHtml}
+            </div>
+            <div class="flex items-center justify-between text-sm text-gray-300 mb-3">
+                <span><i class="fa fa-gamepad mr-1"></i>${firstGameType}</span>
+                <span><i class="fa fa-star mr-1"></i>${ratingDisplay}</span>
+            </div>
+            <div class="flex items-center justify-between">
+                <span class="text-yellow-400 font-bold text-lg">￥${companion.price || 0}/小时</span>
+                <button class="view-companion px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors" data-id="${companion.id}">
+                    查看详情
+                </button>
+            </div>
+        </div>
+    `;
+
+    // 绑定查看详情事件
+    const viewButton = card.querySelector('.view-companion');
+    if (viewButton) {
+        viewButton.addEventListener('click', function() {
+            openCompanionDetailModal(companion.id);
+        });
+    }
+
+    return card;
+}
+
+/**
+ * 根据游戏类型获取分类类名
+ */
+function getCategoryClass(gameType) {
+    if (!gameType) return 'web';
+    
+    const typeMap = {
+        '王者荣耀': 'ui',
+        '英雄联盟': 'photography',
+        '绝地求生': 'illustration',
+        '永劫无间': 'web',
+        '蛋仔派对': 'web'
+    };
+    
+    return typeMap[gameType] || 'web';
+}
+
+/**
+ * 打开陪玩师详情弹窗
+ */
+async function openCompanionDetailModal(companionId) {
+    try {
+        const response = await fetch(`/api/v1/companions/${companionId}`);
+        if (response.ok) {
+            const result = await response.json();
+            if (result.code === 200 && result.data) {
+                showCompanionDetailModal(result.data);
+            }
+        }
+    } catch (error) {
+        console.error('加载陪玩师详情失败:', error);
+        alert('加载详情失败，请稍后重试');
+    }
+}
+
+/**
+ * 显示陪玩师详情弹窗
+ */
+function showCompanionDetailModal(companion) {
+    const modal = document.getElementById('project-modal');
+    const modalContent = document.getElementById('modal-content');
+
+    if (!modal || !modalContent) return;
+
+    // 处理头像，没有头像时使用Logo图片
+    const avatarUrl = companion.avatar || 'image/logo_path.jpg';
+
+    // 处理语音介绍
+    const voiceIntroHtml = companion.voiceIntro ? `
+        <div class="mb-4">
+            <h4 class="text-lg font-semibold mb-2"><i class="fa fa-microphone text-primary mr-2"></i>语音介绍</h4>
+            <audio controls class="w-full">
+                <source src="${companion.voiceIntro}" type="audio/mpeg">
+                您的浏览器不支持音频播放
+            </audio>
+        </div>
+    ` : '';
+
+    // 处理视频
+    const videoHtml = companion.videoUrl ? `
+        <div class="mb-4">
+            <h4 class="text-lg font-semibold mb-2"><i class="fa fa-video-camera text-primary mr-2"></i>精彩视频</h4>
+            <video controls class="w-full rounded-lg">
+                <source src="${companion.videoUrl}" type="video/mp4">
+                您的浏览器不支持视频播放
+            </video>
+        </div>
+    ` : '';
+
+    // 处理段位和服务器
+    const ranks = companion.ranks ? companion.ranks.split(',') : [];
+    const servers = companion.servers ? companion.servers.split(',') : [];
+    
+    const ranksHtml = ranks.length > 0 ? `
+        <div class="mb-3">
+            <span class="font-semibold text-gray-700 dark:text-gray-300">段位：</span>
+            ${ranks.map(rank => `<span class="inline-block bg-secondary/10 text-secondary px-3 py-1 rounded-full text-sm mr-2 mb-1">${rank.trim()}</span>`).join('')}
+        </div>
+    ` : '';
+
+    const serversHtml = servers.length > 0 ? `
+        <div class="mb-3">
+            <span class="font-semibold text-gray-700 dark:text-gray-300">服务器：</span>
+            ${servers.map(server => `<span class="inline-block bg-gray-200 dark:bg-dark-100 px-3 py-1 rounded-full text-sm mr-2 mb-1">${server.trim()}</span>`).join('')}
+        </div>
+    ` : '';
+
+    // 处理标签
+    const tags = companion.tags ? companion.tags.split(',') : [];
+    const tagsHtml = tags.map(tag => 
+        `<span class="inline-block bg-primary/10 text-primary px-3 py-1 rounded-full text-sm mr-2 mb-1">${tag.trim()}</span>`
+    ).join('');
+
+    modalContent.innerHTML = `
+        <div class="relative">
+            <img src="${avatarUrl}" alt="${companion.nickname}" class="w-full h-64 md:h-80 object-cover" onerror="handleImageError(this, '${companion.nickname.charAt(0)}', false)">
+            <button id="close-modal" class="absolute top-4 right-4 bg-white dark:bg-dark-100 rounded-full p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                <i class="fa fa-times"></i>
+            </button>
+        </div>
+        <div class="p-6 md:p-8">
+            <div class="flex flex-wrap items-center gap-4 mb-4">
+                <span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">${companion.gameTypes}</span>
+                <span class="text-gray-500 dark:text-gray-400 text-sm"><i class="fa fa-star mr-1"></i>${companion.rating || 0}分</span>
+                <span class="text-yellow-500 font-bold text-lg"><i class="fa fa-yen mr-1"></i>${companion.price || 0}/小时</span>
+            </div>
+            <h2 class="text-2xl md:text-3xl font-bold mb-4">${companion.nickname}</h2>
+            <p class="text-gray-600 dark:text-gray-300 mb-6">${companion.description || '暂无简介'}</p>
+            
+            ${ranksHtml}
+            ${serversHtml}
+            
+            <div class="mb-4">
+                <span class="font-semibold text-gray-700 dark:text-gray-300">标签：</span>
+                ${tagsHtml}
+            </div>
+            
+            ${voiceIntroHtml}
+            ${videoHtml}
+            
+            <div class="mt-6">
+                <a href="#contact" class="btn-primary inline-flex items-center">
+                    <i class="fa fa-weixin mr-2"></i>立即咨询
+                </a>
+            </div>
+        </div>
+    `;
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    const newCloseBtn = document.getElementById('close-modal');
+    if (newCloseBtn) {
+        newCloseBtn.addEventListener('click', function() {
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        });
     }
 }

@@ -66,6 +66,7 @@ function handleLoginSubmit(e) {
         localStorage.setItem('token', data.token);
         localStorage.setItem('username', data.username);
         localStorage.setItem('avatar', data.avatar || '/image/logo_path.jpg');
+        localStorage.setItem('role', data.role); // 保存角色信息
         window.location.href = 'admin.html';
     })
     .catch(error => {

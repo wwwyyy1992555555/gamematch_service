@@ -90,6 +90,16 @@ function showSection(sectionId) {
     // 移动端：点击链接后自动关闭侧边栏
     closeSidebar();
     
+    // 权限检查：只有超级管理员才能访问管理员管理页面
+    if (sectionId === 'admins') {
+        const role = localStorage.getItem('role');
+        if (role !== '1') {
+            alert('您没有权限访问此页面');
+            showSection('companions'); // 返回陪玩师管理页面
+            return;
+        }
+    }
+    
     // 如果是系统设置页面，加载配置
     if (sectionId === 'settings') {
         loadSystemConfig();
@@ -485,109 +495,26 @@ async function loadCurrentAdminInfo() {
 
 // ==================== 陪玩师管理功能 ====================
 
-// 陪玩师列表分页相关变量
-let companionPage = 1;
-let companionPageSize = 10;
-let companionHasMore = true;
-let companionLoading = false;
-
 /**
- * 分页加载陪玩师列表
- * @param {number} page - 页码
- * @param {number} pageSize - 每页数量
- * @param {boolean} isLoadMore - 是否加载更多
+ * 加载陪玩师列表
  */
-async function loadCompanionListPaged(page = 1, pageSize = 10, isLoadMore = false) {
-    if (companionLoading || !companionHasMore) return;
-    
-    companionLoading = true;
-    
+async function loadCompanionList() {
     try {
         // 使用管理员专用接口，查询所有陪玩师（包括离线）
-        const response = await fetch(`/api/v1/admin/companions?page=${page}&size=${pageSize}`);
+        const response = await fetch('/api/v1/admin/companions?page=1&size=100');
         if (!response.ok) {
-            if (!isLoadMore) {
-                alert('加载陪玩师列表失败，请刷新页面重试');
-            }
+            alert('加载陪玩师列表失败，请刷新页面重试');
             return;
         }
         
         const result = await response.json();
         if (result.code === 200 && result.data) {
-            const companions = result.data;
-            
-            if (companions.length < pageSize) {
-                companionHasMore = false;
-            }
-            
-            if (isLoadMore) {
-                appendCompanionTable(companions);
-            } else {
-                renderCompanionTable(companions);
-            }
-            
-            companionPage = page;
+            renderCompanionTable(result.data);
         } else {
-            if (!isLoadMore) {
-                alert('加载陪玩师列表失败: ' + (result.message || '未知错误'));
-            }
+            alert('加载陪玩师列表失败: ' + (result.message || '未知错误'));
         }
     } catch (error) {
-        if (!isLoadMore) {
-            alert('加载陪玩师列表失败，请检查网络连接');
-        }
-    } finally {
-        companionLoading = false;
-    }
-}
-
-/**
- * 追加陪玩师表格行（用于加载更多）
- * @param {Array} companions - 陪玩师列表数据
- */
-function appendCompanionTable(companions) {
-    const tbody = document.querySelector('#companions .table tbody');
-    if (!tbody) return;
-    
-    // 移除"加载中"提示
-    const loadingRow = tbody.querySelector('.loading-row');
-    if (loadingRow) {
-        loadingRow.remove();
-    }
-    
-    companions.forEach(companion => {
-        const tr = document.createElement('tr');
-        const avatar = companion.avatar || '';
-        const tags = companion.tags || '-';
-        const price = companion.price ? `¥${companion.price}` : '-';
-        const gameTypes = companion.gameTypes || '-';
-        const rating = companion.rating ? companion.rating.toFixed(1) : '-';
-
-        tr.innerHTML = `
-            <td>${avatar ? `<img src="${avatar}" alt="头像" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" onerror="handleImageError(this)">` : ''}</td>
-            <td>${escapeHtml(companion.nickname)}</td>
-            <td>${escapeHtml(tags)}</td>
-            <td>${price}</td>
-            <td>${escapeHtml(gameTypes)}</td>
-            <td>${rating}</td>
-            <td>
-                <button class="btn-icon" onclick="editCompanion(${companion.id})" title="编辑">
-                    <i class="fa fa-pencil"></i>
-                </button>
-                <button class="btn-icon btn-danger" onclick="deleteCompanion(${companion.id})" title="删除">
-                    <i class="fa fa-trash"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(tr);
-    });
-    
-    // 如果还有更多数据，添加"加载中"提示
-    if (companionHasMore) {
-        const loadingTr = document.createElement('tr');
-        loadingTr.className = 'loading-row';
-        loadingTr.innerHTML = '<td colspan="7" style="text-align: center; padding: 20px; color: #999;">加载中...</td>';
-        tbody.appendChild(loadingTr);
+        alert('加载陪玩师列表失败，请检查网络连接');
     }
 }
 
@@ -632,14 +559,7 @@ function renderCompanionTable(companions) {
         `;
         tbody.appendChild(tr);
     });
-    
-    // 如果还有更多数据，添加"加载中"提示
-    if (companionHasMore) {
-        const loadingTr = document.createElement('tr');
-        loadingTr.className = 'loading-row';
-        loadingTr.innerHTML = '<td colspan="7" style="text-align: center; padding: 20px; color: #999;">加载中...</td>';
-        tbody.appendChild(loadingTr);
-    }
+
 }
 
 /**
@@ -1001,9 +921,7 @@ async function saveCompanion() {
         
         // 延迟300ms后刷新列表，确保数据库事务已提交
         setTimeout(() => {
-            companionPage = 1;
-            companionHasMore = true;
-            loadCompanionListPaged(1, companionPageSize, false);
+            loadCompanionList();
         }, 300);
         
     } catch (error) {
@@ -1365,9 +1283,7 @@ async function updateCompanion() {
         
         // 延迟300ms后刷新列表
         setTimeout(() => {
-            companionPage = 1;
-            companionHasMore = true;
-            loadCompanionListPaged(1, companionPageSize, false);
+            loadCompanionList();
         }, 300);
         
     } catch (error) {
@@ -1400,9 +1316,7 @@ async function deleteCompanion(id) {
         
         // 延迟300ms后刷新列表
         setTimeout(() => {
-            companionPage = 1;
-            companionHasMore = true;
-            loadCompanionListPaged(1, companionPageSize, false);
+            loadCompanionList();
         }, 300);
         
     } catch (error) {
@@ -1455,39 +1369,14 @@ function clearCompanionForm(type) {
     }
 }
 
-/**
- * 滚动加载更多陪玩师
- */
-function loadMoreCompanions() {
-    if (companionHasMore && !companionLoading) {
-        loadCompanionListPaged(companionPage + 1, companionPageSize, true);
-    }
-}
 
-// 监听滚动事件，实现无限滚动
-window.addEventListener('scroll', function() {
-    // 检查是否在陪玩师管理页面
-    const companionsSection = document.getElementById('companions');
-    if (!companionsSection || companionsSection.classList.contains('hidden')) {
-        return;
-    }
-    
-    // 判断是否滚动到底部
-    const scrollHeight = document.documentElement.scrollHeight;
-    const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-    const clientHeight = document.documentElement.clientHeight;
-    
-    if (scrollTop + clientHeight >= scrollHeight - 100) {
-        loadMoreCompanions();
-    }
-});
 
 document.addEventListener('DOMContentLoaded', function() {
     // 初始化第一个板块
     showSection('companions');
     
     // 加载陪玩师列表
-    loadCompanionListPaged(1, companionPageSize, false);
+    loadCompanionList();
 
     // 移动端：点击遮罩层关闭侧边栏
     const overlay = document.getElementById('sidebarOverlay');
@@ -1497,7 +1386,29 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // 加载当前管理员信息
     loadCurrentAdminInfo();
+    
+    // 根据角色控制菜单显示（只有超级管理员才能看到管理员管理）
+    initMenuByRole();
 });
+
+/**
+ * 根据角色初始化菜单显示
+ */
+function initMenuByRole() {
+    const role = localStorage.getItem('role');
+    const adminMenuLink = document.querySelector('.sidebar-menu a[onclick*="admins"]');
+    
+    if (adminMenuLink) {
+        // role === 1 表示超级管理员，role === 2 表示普通管理员
+        if (role === '1') {
+            // 超级管理员：显示管理员管理菜单
+            adminMenuLink.style.display = '';
+        } else {
+            // 普通管理员：隐藏管理员管理菜单
+            adminMenuLink.style.display = 'none';
+        }
+    }
+}
 
 /**
  * 获取缩略图路径
@@ -1786,10 +1697,6 @@ async function searchCompanion() {
             const result = await response.json();
             const companions = result.data || [];
             
-            // 重置分页状态
-            companionPage = 1;
-            companionHasMore = false; // 搜索结果不分页，禁用加载更多
-            
             renderCompanionTable(companions);
         } else {
             alert('搜索失败，请重试');
@@ -1807,11 +1714,7 @@ function clearCompanionSearch() {
     document.getElementById('companionSearchInput').value = '';
     document.getElementById('companionSearchClearBtn').style.display = 'none';
     
-    // 重置分页状态
-    companionPage = 1;
-    companionHasMore = true;
-    
-    loadCompanionListPaged(1, companionPageSize, false);
+    loadCompanionList();
 }
 
 /**
