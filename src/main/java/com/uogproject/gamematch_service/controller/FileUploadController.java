@@ -100,6 +100,130 @@ public class FileUploadController {
     }
     
     /**
+     * 上传音频文件
+     */
+    @PostMapping("/audio")
+    public ResponseEntity<Map<String, Object>> uploadAudio(
+            @RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 验证文件是否为空
+            if (file.isEmpty()) {
+                result.put("success", false);
+                result.put("message", "请选择要上传的文件");
+                return ResponseEntity.badRequest().body(result);
+            }
+            
+            // 验证文件类型
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("audio/")) {
+                result.put("success", false);
+                result.put("message", "只支持上传音频文件");
+                return ResponseEntity.badRequest().body(result);
+            }
+            
+            // 创建上传目录
+            String audioDir = uploadDir + File.separator + "audio";
+            File uploadPath = new File(audioDir);
+            if (!uploadPath.exists()) {
+                uploadPath.mkdirs();
+            }
+            
+            // 生成文件名：使用UUID生成唯一文件名，保留原始扩展名
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            String filename = UUID.randomUUID().toString() + extension;
+            
+            // 保存文件
+            Path filePath = Paths.get(audioDir, filename);
+            Files.write(filePath, file.getBytes());
+            
+            // 返回文件访问路径
+            String fileUrl = "/audio/" + filename;
+            result.put("success", true);
+            result.put("message", "上传成功");
+            result.put("url", fileUrl);
+            result.put("filename", filename);
+            
+            log.info("音频上传成功: {}", fileUrl);
+            
+        } catch (IOException e) {
+            log.error("音频上传失败", e);
+            result.put("success", false);
+            result.put("message", "上传失败: " + e.getMessage());
+            return ResponseEntity.status(500).body(result);
+        }
+        
+        return ResponseEntity.ok(result);
+    }
+    
+    /**
+     * 上传视频文件
+     */
+    @PostMapping("/video")
+    public ResponseEntity<Map<String, Object>> uploadVideo(
+            @RequestParam("file") MultipartFile file) {
+        Map<String, Object> result = new HashMap<>();
+        
+        try {
+            // 验证文件是否为空
+            if (file.isEmpty()) {
+                result.put("success", false);
+                result.put("message", "请选择要上传的文件");
+                return ResponseEntity.badRequest().body(result);
+            }
+            
+            // 验证文件类型
+            String contentType = file.getContentType();
+            if (contentType == null || !contentType.startsWith("video/")) {
+                result.put("success", false);
+                result.put("message", "只支持上传视频文件");
+                return ResponseEntity.badRequest().body(result);
+            }
+            
+            // 创建上传目录
+            String videoDir = uploadDir + File.separator + "video";
+            File uploadPath = new File(videoDir);
+            if (!uploadPath.exists()) {
+                uploadPath.mkdirs();
+            }
+            
+            // 生成文件名：使用UUID生成唯一文件名，保留原始扩展名
+            String originalFilename = file.getOriginalFilename();
+            String extension = "";
+            if (originalFilename != null && originalFilename.contains(".")) {
+                extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+            }
+            String filename = UUID.randomUUID().toString() + extension;
+            
+            // 保存文件
+            Path filePath = Paths.get(videoDir, filename);
+            Files.write(filePath, file.getBytes());
+            
+            // 返回文件访问路径
+            String fileUrl = "/video/" + filename;
+            result.put("success", true);
+            result.put("message", "上传成功");
+            result.put("url", fileUrl);
+            result.put("filename", filename);
+            
+            log.info("视频上传成功: {}", fileUrl);
+            
+        } catch (IOException e) {
+            log.error("视频上传失败", e);
+            result.put("success", false);
+            result.put("message", "上传失败: " + e.getMessage());
+            return ResponseEntity.status(500).body(result);
+        }
+        
+        return ResponseEntity.ok(result);
+    }
+    
+    /**
      * 批量生成缩略图（保存配置时调用）
      */
     @PostMapping("/generate-thumbnails")

@@ -151,44 +151,59 @@ function openModal(modalType) {
             if (modalType === 'addAdmin') {
                 initAddAdminAvatarPreview();
             }
+            
+            // 如果是添加陪玩师弹窗，初始化显示"无"占位符
+            if (modalType === 'addCompanion') {
+                initAddCompanionAvatarPreview();
+            }
+            
+            // 如果是编辑管理员弹窗，初始化清空容器
+            if (modalType === 'editAdmin') {
+                initEditAdminAvatarPreview();
+            }
+            
+            // 如果是编辑陪玩师弹窗，初始化清空容器
+            if (modalType === 'editCompanion') {
+                initEditCompanionAvatarPreview();
+            }
         }
     }
 }
 
 /**
- * 初始化添加管理员头像预览（显示"无"占位符）
+ * 初始化添加管理员头像预览（不显示占位符）
  */
 function initAddAdminAvatarPreview() {
     const previewContainer = document.getElementById('addAdminAvatar_preview');
     if (!previewContainer) return;
-    
-    // 如果已经有内容，不重复初始化
-    if (previewContainer.children.length > 0) return;
-    
-    // 创建圆形容器
-    const avatarWrapper = document.createElement('div');
-    avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
-    
-    // 创建圆形占位符
-    const placeholder = document.createElement('div');
-    placeholder.className = 'image-placeholder';
-    placeholder.style.cssText = `
-        width: 60px;
-        height: 60px;
-        max-width: 60px;
-        max-height: 60px;
-        border-radius: 50%;
-        background-color: #f3f4f6;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #9ca3af;
-        font-size: 12px;
-    `;
-    placeholder.textContent = '无';
-    
-    avatarWrapper.appendChild(placeholder);
-    previewContainer.appendChild(avatarWrapper);
+    previewContainer.innerHTML = '';
+}
+
+/**
+ * 初始化编辑管理员头像预览（不显示占位符）
+ */
+function initEditAdminAvatarPreview() {
+    const previewContainer = document.getElementById('editAdminAvatar_preview');
+    if (!previewContainer) return;
+    previewContainer.innerHTML = '';
+}
+
+/**
+ * 初始化添加陪玩师头像预览（不显示占位符）
+ */
+function initAddCompanionAvatarPreview() {
+    const previewContainer = document.getElementById('addCompanionAvatar_preview');
+    if (!previewContainer) return;
+    previewContainer.innerHTML = '';
+}
+
+/**
+ * 初始化编辑陪玩师头像预览（不显示占位符）
+ */
+function initEditCompanionAvatarPreview() {
+    const previewContainer = document.getElementById('editCompanionAvatar_preview');
+    if (!previewContainer) return;
+    previewContainer.innerHTML = '';
 }
 
 /**
@@ -625,6 +640,9 @@ function renderCompanionTable(companions) {
  * 预览陪玩师头像
  * @param {HTMLElement} inputElement - 文件输入元素
  */
+/**
+ * 预览陪玩师头像（上传前预览）
+ */
 function previewCompanionAvatar(inputElement) {
     const file = inputElement.files[0];
     if (!file) return;
@@ -638,22 +656,242 @@ function previewCompanionAvatar(inputElement) {
     
     // 判断是新增还是编辑弹窗
     const isAddModal = inputElement.id === 'addCompanionAvatar_file';
-    const previewId = isAddModal ? 'addCompanionAvatarPreview' : 'editCompanionAvatarPreview';
-    const hiddenFieldId = isAddModal ? 'addCompanionAvatar' : 'editCompanionAvatar';
+    const previewContainerId = isAddModal ? 'addCompanionAvatar_preview' : 'editCompanionAvatar_preview';
     
+    // 使用Canvas生成临时预览
     const reader = new FileReader();
     reader.onload = function(e) {
-        const previewImg = document.getElementById(previewId);
-        if (previewImg) {
-            previewImg.src = e.target.result;
-            previewImg.style.display = 'block'; // 显示预览图片
-            // 动态绑定错误处理
-            previewImg.onerror = function() {
-                handleImageError(this, '无', false);
-            };
-        }
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 计算缩放比例
+            const maxSize = 300;
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > height) {
+                if (width > maxSize) {
+                    height *= maxSize / width;
+                    width = maxSize;
+                }
+            } else {
+                if (height > maxSize) {
+                    width *= maxSize / height;
+                    height = maxSize;
+                }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            
+            const previewContainer = document.getElementById(previewContainerId);
+            if (!previewContainer) return;
+            
+            // 创建圆形容器
+            const avatarWrapper = document.createElement('div');
+            avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
+            
+            // 创建图片元素
+            const avatarImg = document.createElement('img');
+            avatarImg.src = dataUrl;
+            avatarImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;';
+            
+            // 创建删除按钮
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.onclick = function() { removeCompanionAvatar(isAddModal); };
+            deleteBtn.style.cssText = `
+                position: absolute;
+                top: -4px;
+                right: -4px;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: #ef4444;
+                color: white;
+                border: 2px solid white;
+                cursor: pointer;
+                font-size: 14px;
+                line-height: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+            `;
+            deleteBtn.textContent = '×';
+            
+            // 组装元素
+            avatarWrapper.appendChild(avatarImg);
+            avatarWrapper.appendChild(deleteBtn);
+            previewContainer.innerHTML = '';
+            previewContainer.appendChild(avatarWrapper);
+        };
+        img.src = e.target.result;
     };
     reader.readAsDataURL(file);
+}
+
+/**
+ * 删除陪玩师头像预览
+ */
+function removeCompanionAvatar(isAdd) {
+    const prefix = isAdd ? 'add' : 'edit';
+    const previewContainer = document.getElementById(`${prefix}CompanionAvatar_preview`);
+    const fileInput = document.getElementById(`${prefix}CompanionAvatar_file`);
+    
+    if (previewContainer) {
+        previewContainer.innerHTML = '';
+    }
+    if (fileInput) {
+        fileInput.value = '';
+    }
+}
+
+/**
+ * 预览陪玩师音频（本地预览，不上传）
+ */
+function previewCompanionAudio(inputElement) {
+    const file = inputElement.files[0];
+    if (!file) return;
+    
+    // 验证文件大小（10MB）
+    if (file.size > 10 * 1024 * 1024) {
+        alert('音频文件大小不能超过10MB');
+        inputElement.value = '';
+        return;
+    }
+    
+    // 判断是新增还是编辑
+    const isAdd = inputElement.id === 'addCompanionVoiceIntro_file';
+    const previewId = isAdd ? 'addCompanionVoiceIntro_preview' : 'editCompanionVoiceIntro_preview';
+    
+    // 创建URL用于本地预览
+    const objectUrl = URL.createObjectURL(file);
+    
+    const previewContainer = document.getElementById(previewId);
+    if (!previewContainer) return;
+    
+    // 创建音频播放器
+    const audio = document.createElement('audio');
+    audio.controls = true;
+    audio.src = objectUrl;
+    audio.style.cssText = 'width: 100%; max-width: 300px;';
+    
+    // 创建删除按钮
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.textContent = '×';
+    deleteBtn.onclick = function() { removeCompanionAudio(isAdd); };
+    deleteBtn.style.cssText = `
+        margin-left: 8px;
+        padding: 4px 8px;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+    `;
+    
+    previewContainer.innerHTML = '';
+    previewContainer.appendChild(audio);
+    previewContainer.appendChild(deleteBtn);
+}
+
+/**
+ * 删除陪玩师音频
+ */
+function removeCompanionAudio(isAdd) {
+    const prefix = isAdd ? 'add' : 'edit';
+    const previewContainer = document.getElementById(`${prefix}CompanionVoiceIntro_preview`);
+    const fileInput = document.getElementById(`${prefix}CompanionVoiceIntro_file`);
+    const hiddenInput = document.getElementById(`${prefix}CompanionVoiceIntro`);
+    
+    if (previewContainer) {
+        previewContainer.innerHTML = '';
+    }
+    if (fileInput) {
+        fileInput.value = '';
+    }
+    if (hiddenInput) {
+        hiddenInput.value = '';
+    }
+}
+
+/**
+ * 预览陪玩师视频（本地预览，不上传）
+ */
+function previewCompanionVideo(inputElement) {
+    const file = inputElement.files[0];
+    if (!file) return;
+    
+    // 验证文件大小（10MB）
+    if (file.size > 10 * 1024 * 1024) {
+        alert('视频文件大小不能超过10MB');
+        inputElement.value = '';
+        return;
+    }
+    
+    // 判断是新增还是编辑
+    const isAdd = inputElement.id === 'addCompanionVideoUrl_file';
+    const previewId = isAdd ? 'addCompanionVideoUrl_preview' : 'editCompanionVideoUrl_preview';
+    
+    // 创建URL用于本地预览
+    const objectUrl = URL.createObjectURL(file);
+    
+    const previewContainer = document.getElementById(previewId);
+    if (!previewContainer) return;
+    
+    // 创建视频播放器
+    const video = document.createElement('video');
+    video.controls = true;
+    video.src = objectUrl;
+    video.style.cssText = 'width: 100%; max-width: 400px; max-height: 250px; border-radius: 8px;';
+    
+    // 创建删除按钮
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.textContent = '×';
+    deleteBtn.onclick = function() { removeCompanionVideo(isAdd); };
+    deleteBtn.style.cssText = `
+        margin-top: 8px;
+        padding: 4px 8px;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+    `;
+    
+    previewContainer.innerHTML = '';
+    previewContainer.appendChild(video);
+    previewContainer.appendChild(deleteBtn);
+}
+
+/**
+ * 删除陪玩师视频
+ */
+function removeCompanionVideo(isAdd) {
+    const prefix = isAdd ? 'add' : 'edit';
+    const previewContainer = document.getElementById(`${prefix}CompanionVideoUrl_preview`);
+    const fileInput = document.getElementById(`${prefix}CompanionVideoUrl_file`);
+    const hiddenInput = document.getElementById(`${prefix}CompanionVideoUrl`);
+    
+    if (previewContainer) {
+        previewContainer.innerHTML = '';
+    }
+    if (fileInput) {
+        fileInput.value = '';
+    }
+    if (hiddenInput) {
+        hiddenInput.value = '';
+    }
 }
 
 /**
@@ -662,8 +900,17 @@ function previewCompanionAvatar(inputElement) {
 async function saveCompanion() {
     const nickname = document.getElementById('addCompanionNickname').value.trim();
     const gameTypes = document.getElementById('addCompanionGameTypes').value.trim();
-    const avatar = document.getElementById('addCompanionAvatar').value;
     const description = document.getElementById('addCompanionDescription').value.trim();
+    const tags = document.getElementById('addCompanionTags').value.trim();
+    const price = document.getElementById('addCompanionPrice').value;
+    const rating = document.getElementById('addCompanionRating').value;
+    const ranks = document.getElementById('addCompanionRanks').value.trim();
+    const servers = document.getElementById('addCompanionServers').value.trim();
+    
+    // 获取文件
+    const avatarFile = document.getElementById('addCompanionAvatar_file').files[0];
+    const voiceIntroFile = document.getElementById('addCompanionVoiceIntro_file').files[0];
+    const videoUrlFile = document.getElementById('addCompanionVideoUrl_file').files[0];
     
     // 校验必填字段
     if (!nickname) {
@@ -676,29 +923,37 @@ async function saveCompanion() {
     }
     
     try {
-        // 构建请求数据
-        const companionData = {
-            nickname: nickname,
-            price: 0, // 默认价格
-            gameTypes: gameTypes,
-            ranks: null,
-            servers: null,
-            rating: 100, // 默认评分
-            avatar: avatar || null,
-            isOnline: true, // 默认在线
-            tags: null,
-            description: description || null,
-            voiceIntro: null,
-            videoUrl: null
-        };
+        // 使用FormData传递所有数据（包含文件）
+        const formData = new FormData();
+        formData.append('nickname', nickname);
+        formData.append('gameTypes', gameTypes);
+        formData.append('description', description || '');
+        formData.append('tags', tags || '');
+        formData.append('price', price || '');
+        formData.append('rating', rating || '');
+        formData.append('ranks', ranks || '');
+        formData.append('servers', servers || '');
+        
+        // 如果有头像文件，添加到FormData
+        if (avatarFile) {
+            formData.append('avatarFile', avatarFile);
+        }
+        
+        // 如果有音频文件，添加到FormData
+        if (voiceIntroFile) {
+            formData.append('voiceIntroFile', voiceIntroFile);
+        }
+        
+        // 如果有视频文件，添加到FormData
+        if (videoUrlFile) {
+            formData.append('videoUrlFile', videoUrlFile);
+        }
         
         // 调用新增接口
         const response = await fetch('/api/v1/admin/companions', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(companionData)
+            body: formData
+            // 注意：使用FormData时不要设置Content-Type，浏览器会自动设置为multipart/form-data
         });
         
         const result = await response.json();
@@ -758,42 +1013,20 @@ async function editAdmin(id) {
         
         // 设置头像预览
         const previewContainer = document.getElementById('editAdminAvatar_preview');
+        // 先清空容器
+        if (previewContainer) {
+            previewContainer.innerHTML = '';
+        }
+        
         if (admin.avatar) {
             // 使用圆形头像样式
             const avatarWrapper = document.createElement('div');
             avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
             
-            // 创建圆形占位符
-            const placeholder = document.createElement('div');
-            placeholder.className = 'image-placeholder';
-            placeholder.style.cssText = `
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                background-color: #f3f4f6;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: #9ca3af;
-                font-size: 12px;
-            `;
-            placeholder.textContent = '无';
-            
             // 创建图片元素
             const avatarImg = document.createElement('img');
             avatarImg.src = admin.avatar;
-            avatarImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb; position: absolute; top: 0; left: 0;';
-            
-            // 图片加载成功时隐藏占位符
-            avatarImg.onload = function() {
-                placeholder.style.display = 'none';
-            };
-            
-            // 图片加载失败时显示占位符
-            avatarImg.onerror = function() {
-                this.style.display = 'none';
-                placeholder.style.display = 'flex';
-            };
+            avatarImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;';
             
             // 创建删除按钮
             const deleteBtn = document.createElement('button');
@@ -820,7 +1053,6 @@ async function editAdmin(id) {
             deleteBtn.textContent = '×';
             
             // 组装元素
-            avatarWrapper.appendChild(placeholder);
             avatarWrapper.appendChild(avatarImg);
             avatarWrapper.appendChild(deleteBtn);
             previewContainer.innerHTML = '';
@@ -828,29 +1060,7 @@ async function editAdmin(id) {
             
             document.getElementById('editAdminAvatar').value = admin.avatar;
         } else {
-            // 没有头像时显示"无"占位符
-            const avatarWrapper = document.createElement('div');
-            avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
-            
-            const placeholder = document.createElement('div');
-            placeholder.className = 'image-placeholder';
-            placeholder.style.cssText = `
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                background-color: #f3f4f6;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: #9ca3af;
-                font-size: 12px;
-            `;
-            placeholder.textContent = '无';
-            
-            avatarWrapper.appendChild(placeholder);
-            previewContainer.innerHTML = '';
-            previewContainer.appendChild(avatarWrapper);
-            
+            // 没有头像，保持容器为空
             document.getElementById('editAdminAvatar').value = '';
         }
         
@@ -1002,22 +1212,122 @@ async function editCompanion(id) {
         document.getElementById('editCompanionNickname').value = companion.nickname || '';
         document.getElementById('editCompanionGameTypes').value = companion.gameTypes || '';
         document.getElementById('editCompanionDescription').value = companion.description || '';
+        document.getElementById('editCompanionTags').value = companion.tags || '';
+        document.getElementById('editCompanionPrice').value = companion.price || '';
+        document.getElementById('editCompanionRating').value = companion.rating || '';
+        document.getElementById('editCompanionRanks').value = companion.ranks || '';
+        document.getElementById('editCompanionServers').value = companion.servers || '';
+        document.getElementById('editCompanionVoiceIntro').value = companion.voiceIntro || '';
+        document.getElementById('editCompanionVideoUrl').value = companion.videoUrl || '';
+        
+        // 设置音频预览
+        if (companion.voiceIntro) {
+            const audioPreview = document.getElementById('editCompanionVoiceIntro_preview');
+            if (audioPreview) {
+                const audio = document.createElement('audio');
+                audio.controls = true;
+                audio.src = companion.voiceIntro;
+                audio.style.cssText = 'width: 100%; max-width: 300px;';
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.textContent = '×';
+                deleteBtn.onclick = function() { removeCompanionAudio(false); };
+                deleteBtn.style.cssText = `
+                    margin-left: 8px;
+                    padding: 4px 8px;
+                    background: #ef4444;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                `;
+                
+                audioPreview.innerHTML = '';
+                audioPreview.appendChild(audio);
+                audioPreview.appendChild(deleteBtn);
+            }
+        }
+        
+        // 设置视频预览
+        if (companion.videoUrl) {
+            const videoPreview = document.getElementById('editCompanionVideoUrl_preview');
+            if (videoPreview) {
+                const video = document.createElement('video');
+                video.controls = true;
+                video.src = companion.videoUrl;
+                video.style.cssText = 'width: 100%; max-width: 400px; max-height: 250px; border-radius: 8px;';
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.textContent = '×';
+                deleteBtn.onclick = function() { removeCompanionVideo(false); };
+                deleteBtn.style.cssText = `
+                    margin-top: 8px;
+                    padding: 4px 8px;
+                    background: #ef4444;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 12px;
+                `;
+                
+                videoPreview.innerHTML = '';
+                videoPreview.appendChild(video);
+                videoPreview.appendChild(deleteBtn);
+            }
+        }
         
         // 设置头像预览
-        const avatarPreview = document.getElementById('editCompanionAvatarPreview');
+        const previewContainer = document.getElementById('editCompanionAvatar_preview');
+        // 先清空容器
+        if (previewContainer) {
+            previewContainer.innerHTML = '';
+        }
+        
         if (companion.avatar) {
-            // 如果有头像，显示
-            avatarPreview.src = companion.avatar;
-            avatarPreview.style.display = 'block';
-            // 添加错误处理
-            avatarPreview.onerror = function() {
-                handleImageError(this, '无', true);
-            };
+            // 如果有头像，显示圆形预览
+            if (previewContainer) {
+                const avatarWrapper = document.createElement('div');
+                avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
+                
+                const avatarImg = document.createElement('img');
+                avatarImg.src = companion.avatar;
+                avatarImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;';
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.onclick = function() { removeCompanionAvatar(false); };
+                deleteBtn.style.cssText = `
+                    position: absolute;
+                    top: -4px;
+                    right: -4px;
+                    width: 20px;
+                    height: 20px;
+                    border-radius: 50%;
+                    background: #ef4444;
+                    color: white;
+                    border: 2px solid white;
+                    cursor: pointer;
+                    font-size: 14px;
+                    line-height: 1;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 0;
+                `;
+                deleteBtn.textContent = '×';
+                
+                avatarWrapper.appendChild(avatarImg);
+                avatarWrapper.appendChild(deleteBtn);
+                previewContainer.innerHTML = '';
+                previewContainer.appendChild(avatarWrapper);
+            }
             document.getElementById('editCompanionAvatar').value = companion.avatar;
         } else {
-            // 如果没有头像，隐藏
-            avatarPreview.src = '';
-            avatarPreview.style.display = 'none';
+            // 没有头像，保持容器为空
             document.getElementById('editCompanionAvatar').value = '';
         }
         
@@ -1037,8 +1347,17 @@ async function updateCompanion() {
         const id = document.getElementById('editCompanionId').value;
         const nickname = document.getElementById('editCompanionNickname').value.trim();
         const gameTypes = document.getElementById('editCompanionGameTypes').value.trim();
-        const avatar = document.getElementById('editCompanionAvatar').value;
         const description = document.getElementById('editCompanionDescription').value.trim();
+        const tags = document.getElementById('editCompanionTags').value.trim();
+        const price = document.getElementById('editCompanionPrice').value;
+        const rating = document.getElementById('editCompanionRating').value;
+        const ranks = document.getElementById('editCompanionRanks').value.trim();
+        const servers = document.getElementById('editCompanionServers').value.trim();
+        
+        // 获取文件
+        const avatarFile = document.getElementById('editCompanionAvatar_file').files[0];
+        const voiceIntroFile = document.getElementById('editCompanionVoiceIntro_file').files[0];
+        const videoUrlFile = document.getElementById('editCompanionVideoUrl_file').files[0];
         
         // 校验必填字段
         if (!nickname) {
@@ -1050,29 +1369,37 @@ async function updateCompanion() {
             return;
         }
         
-        // 构建请求数据
-        const companionData = {
-            nickname: nickname,
-            price: null, // 保持原有价格
-            gameTypes: gameTypes,
-            ranks: null, // 保持原有段位
-            servers: null, // 保持原有服务器
-            rating: null, // 保持原有评分
-            avatar: avatar || null,
-            isOnline: null, // 保持原有状态
-            tags: null, // 保持原有标签
-            description: description || null,
-            voiceIntro: null, // 保持原有语音介绍
-            videoUrl: null // 保持原有视频链接
-        };
+        // 使用FormData传递所有数据（包含文件）
+        const formData = new FormData();
+        formData.append('nickname', nickname);
+        formData.append('gameTypes', gameTypes);
+        formData.append('description', description || '');
+        formData.append('tags', tags || '');
+        formData.append('price', price || '');
+        formData.append('rating', rating || '');
+        formData.append('ranks', ranks || '');
+        formData.append('servers', servers || '');
+        
+        // 如果有头像文件，添加到FormData
+        if (avatarFile) {
+            formData.append('avatarFile', avatarFile);
+        }
+        
+        // 如果有音频文件，添加到FormData
+        if (voiceIntroFile) {
+            formData.append('voiceIntroFile', voiceIntroFile);
+        }
+        
+        // 如果有视频文件，添加到FormData
+        if (videoUrlFile) {
+            formData.append('videoUrlFile', videoUrlFile);
+        }
         
         // 调用更新接口
         const response = await fetch(`/api/v1/admin/companions/${id}`, {
             method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(companionData)
+            body: formData
+            // 注意：使用FormData时不要设置Content-Type，浏览器会自动设置为multipart/form-data
         });
         
         const result = await response.json();
@@ -1143,7 +1470,7 @@ function clearCompanionForm(type) {
     const prefix = type === 'add' ? 'addCompanion' : 'editCompanion';
     
     // 安全地设置表单字段值（添加空值检查）
-    const fields = ['Nickname', 'GameTypes', 'Description'];
+    const fields = ['Nickname', 'GameTypes', 'Description', 'Tags', 'Price', 'Rating', 'Ranks', 'Servers', 'VoiceIntro', 'VideoUrl'];
     fields.forEach(field => {
         const element = document.getElementById(`${prefix}${field}`);
         if (element) {
@@ -1151,17 +1478,26 @@ function clearCompanionForm(type) {
         }
     });
     
+    // 清空音频和视频预览
+    const audioPreview = document.getElementById(`${prefix}VoiceIntro_preview`);
+    if (audioPreview) {
+        audioPreview.innerHTML = '';
+    }
+    const videoPreview = document.getElementById(`${prefix}VideoUrl_preview`);
+    if (videoPreview) {
+        videoPreview.innerHTML = '';
+    }
+    
     // 设置头像隐藏字段
     const avatarElement = document.getElementById(`${prefix}Avatar`);
     if (avatarElement) {
         avatarElement.value = '';
     }
     
-    // 重置头像预览
-    const previewImg = document.getElementById(`${prefix}AvatarPreview`);
-    if (previewImg) {
-        previewImg.src = ''; // 清空默认图片
-        previewImg.style.display = 'none';
+    // 重置头像预览容器
+    const previewContainer = document.getElementById(`${prefix}Avatar_preview`);
+    if (previewContainer) {
+        previewContainer.innerHTML = '';
     }
     
     // 清空文件选择
@@ -1469,37 +1805,10 @@ function previewAdminAvatar(inputElement) {
             const avatarWrapper = document.createElement('div');
             avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
             
-            // 创建圆形占位符（初始显示"无"）
-            const placeholder = document.createElement('div');
-            placeholder.className = 'image-placeholder';
-            placeholder.style.cssText = `
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                background-color: #f3f4f6;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: #9ca3af;
-                font-size: 12px;
-            `;
-            placeholder.textContent = '无';
-            
             // 创建图片元素
             const avatarImg = document.createElement('img');
             avatarImg.src = dataUrl;
-            avatarImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb; position: absolute; top: 0; left: 0;';
-            
-            // 图片加载成功时隐藏占位符
-            avatarImg.onload = function() {
-                placeholder.style.display = 'none';
-            };
-            
-            // 图片加载失败时显示占位符
-            avatarImg.onerror = function() {
-                this.style.display = 'none';
-                placeholder.style.display = 'flex';
-            };
+            avatarImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;';
             
             // 创建删除按钮
             const deleteBtn = document.createElement('button');
@@ -1526,7 +1835,6 @@ function previewAdminAvatar(inputElement) {
             deleteBtn.textContent = '×';
             
             // 组装元素
-            avatarWrapper.appendChild(placeholder);
             avatarWrapper.appendChild(avatarImg);
             avatarWrapper.appendChild(deleteBtn);
             previewContainer.innerHTML = '';
@@ -1605,37 +1913,10 @@ function previewEditAdminAvatar(inputElement) {
             const avatarWrapper = document.createElement('div');
             avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
             
-            // 创建圆形占位符（初始显示"无"）
-            const placeholder = document.createElement('div');
-            placeholder.className = 'image-placeholder';
-            placeholder.style.cssText = `
-                width: 60px;
-                height: 60px;
-                border-radius: 50%;
-                background-color: #f3f4f6;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: #9ca3af;
-                font-size: 12px;
-            `;
-            placeholder.textContent = '无';
-            
             // 创建图片元素
             const avatarImg = document.createElement('img');
             avatarImg.src = dataUrl;
-            avatarImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb; position: absolute; top: 0; left: 0;';
-            
-            // 图片加载成功时隐藏占位符
-            avatarImg.onload = function() {
-                placeholder.style.display = 'none';
-            };
-            
-            // 图片加载失败时显示占位符
-            avatarImg.onerror = function() {
-                this.style.display = 'none';
-                placeholder.style.display = 'flex';
-            };
+            avatarImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;';
             
             // 创建删除按钮
             const deleteBtn = document.createElement('button');
@@ -1662,7 +1943,6 @@ function previewEditAdminAvatar(inputElement) {
             deleteBtn.textContent = '×';
             
             // 组装元素
-            avatarWrapper.appendChild(placeholder);
             avatarWrapper.appendChild(avatarImg);
             avatarWrapper.appendChild(deleteBtn);
             previewContainer.innerHTML = '';

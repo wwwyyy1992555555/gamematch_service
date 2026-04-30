@@ -16,5 +16,17 @@ public class WebConfig implements WebMvcConfigurer {
         // 配置静态资源访问路径
         registry.addResourceHandler("/image/**")
                 .addResourceLocations("classpath:/static/image/");
+        
+        // 配置上传文件的访问路径
+        registry.addResourceHandler("/image/upload/**")
+                .addResourceLocations("file:" + uploadDir + "/");
+        
+        // 配置音频文件的访问路径
+        registry.addResourceHandler("/audio/**")
+                .addResourceLocations("file:" + uploadDir + "/audio/");
+        
+        // 配置视频文件的访问路径
+        registry.addResourceHandler("/video/**")
+                .addResourceLocations("file:" + uploadDir + "/video/");
     }
 }
