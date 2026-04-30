@@ -13,6 +13,10 @@ public class WebConfig implements WebMvcConfigurer {
     
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        // 配置静态资源访问路径（兼容旧路径 /images）
+        registry.addResourceHandler("/images/**")
+                .addResourceLocations("classpath:/static/image/");
+        
         // 配置静态资源访问路径
         registry.addResourceHandler("/image/**")
                 .addResourceLocations("classpath:/static/image/");
@@ -21,12 +25,12 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addResourceHandler("/image/upload/**")
                 .addResourceLocations("file:" + uploadDir + "/");
         
-        // 配置音频文件的访问路径
+        // 配置音频文件的访问路径（static目录）
         registry.addResourceHandler("/audio/**")
-                .addResourceLocations("file:" + uploadDir + "/audio/");
+                .addResourceLocations("classpath:/static/audio/");
         
-        // 配置视频文件的访问路径
+        // 配置视频文件的访问路径（static目录）
         registry.addResourceHandler("/video/**")
-                .addResourceLocations("file:" + uploadDir + "/video/");
+                .addResourceLocations("classpath:/static/video/");
     }
 }

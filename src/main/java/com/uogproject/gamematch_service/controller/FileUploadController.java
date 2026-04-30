@@ -6,6 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -24,7 +25,20 @@ import java.util.UUID;
 public class FileUploadController {
     
     @Value("${app.upload-dir}")
+    private String uploadDirConfig;
+    
     private String uploadDir;
+    
+    @PostConstruct
+    public void init() {
+        // 转换为绝对路径
+        File dir = new File(uploadDirConfig);
+        if (!dir.isAbsolute()) {
+            dir = new File(System.getProperty("user.dir"), uploadDirConfig);
+        }
+        this.uploadDir = dir.getAbsolutePath();
+        log.info("FileUploadController 文件上传目录: {}", this.uploadDir);
+    }
     
     /**
      * 上传图片文件（统一转换为JPG格式）
@@ -52,7 +66,7 @@ public class FileUploadController {
             }
             
             // 创建上传目录
-            File uploadPath = new File(uploadDir);
+            File uploadPath = new File(uploadDir + "/image");
             if (!uploadPath.exists()) {
                 uploadPath.mkdirs();
             }
@@ -76,7 +90,7 @@ public class FileUploadController {
             }
             
             // 保存原始文件（统一保存为JPG格式）
-            Path filePath = Paths.get(uploadDir, filename);
+            Path filePath = Paths.get(uploadPath.getPath(), filename);
             File outputFile = filePath.toFile();
             ImageIO.write(originalImage, "jpg", outputFile);
             

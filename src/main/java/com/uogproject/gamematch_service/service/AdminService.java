@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -32,7 +33,20 @@ public class AdminService {
     private AdminUserRepository adminUserRepository;
 
     @Value("${app.upload-dir}")
+    private String uploadDirConfig;
+    
     private String uploadDir;
+    
+    @PostConstruct
+    public void init() {
+        // 转换为绝对路径
+        File dir = new File(uploadDirConfig);
+        if (!dir.isAbsolute()) {
+            dir = new File(System.getProperty("user.dir"), uploadDirConfig);
+        }
+        this.uploadDir = dir.getAbsolutePath();
+        log.info("AdminService 文件上传目录: {}", this.uploadDir);
+    }
 
     /**
      * 管理员登录验证
@@ -168,14 +182,14 @@ public class AdminService {
             }
 
             // 创建上传目录
-            File uploadPath = new File(uploadDir);
+            File uploadPath = new File(uploadDir + "/image");
             if (!uploadPath.exists()) {
                 uploadPath.mkdirs();
             }
 
             // 生成文件名：admin_avatar{id}.jpg
             String filename = "admin_avatar" + adminId + ".jpg";
-            Path filePath = Paths.get(uploadDir, filename);
+            Path filePath = Paths.get(uploadPath.getPath(), filename);
             File outputFile = filePath.toFile();
             ImageIO.write(originalImage, "jpg", outputFile);
 

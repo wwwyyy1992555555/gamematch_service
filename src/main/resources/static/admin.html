@@ -102,9 +102,20 @@
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title">陪玩师列表</h2>
-                        <button class="btn btn-primary" onclick="openModal('addCompanion')">
-                            <i class="fa fa-plus"></i>添加陪玩师
-                        </button>
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <div style="position: relative;">
+                                <input type="text" id="companionSearchInput" placeholder="搜索昵称、标签、游戏类型..." style="padding: 8px 32px 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px; width: 250px; outline: none;" onkeypress="if(event.key==='Enter') searchCompanion()" onblur="searchCompanion()">
+                                <button onclick="clearCompanionSearch()" id="companionSearchClearBtn" style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #9ca3af; font-size: 14px; padding: 0; display: none; line-height: 1; width: 14px; height: 14px;" onmouseover="this.style.color='#6b7280'" onmouseout="this.style.color='#9ca3af'" title="清空搜索">
+                                    <div style="position: relative; width: 100%; height: 100%;">
+                                        <div style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1px; background: currentColor; transform: translate(-50%, -50%) rotate(45deg);"></div>
+                                        <div style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1px; background: currentColor; transform: translate(-50%, -50%) rotate(-45deg);"></div>
+                                    </div>
+                                </button>
+                            </div>
+                            <button class="btn btn-primary" onclick="openModal('addCompanion')">
+                                <i class="fa fa-plus"></i>添加陪玩师
+                            </button>
+                        </div>
                     </div>
                     
                     <table class="table">
@@ -230,14 +241,14 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>Logo图片</label>
-                                <input type="file" class="form-control" id="logo_path_file" accept="image/*" onchange="previewImage('logo_path', this)">
+                                <input type="file" class="form-control" id="logo_path_file" accept="image/*" onchange="handleImageSelect('logo_path', this)">
                                 <small style="color: #6b7280; font-size: 12px;">建议尺寸：200x200像素，支持JPG、PNG格式</small>
                                 <input type="hidden" name="logo_path" id="logo_path">
                                 <div id="logo_path_preview" style="margin-top: 8px;"></div>
                             </div>
                             <div class="form-group">
                                 <label>背景图片</label>
-                                <input type="file" class="form-control" id="background_image_file" accept="image/*" onchange="previewImage('background_image', this)">
+                                <input type="file" class="form-control" id="background_image_file" accept="image/*" onchange="handleImageSelect('background_image', this)">
                                 <small style="color: #6b7280; font-size: 12px;">建议尺寸：1920x1080像素，支持JPG、PNG格式</small>
                                 <input type="hidden" name="background_image" id="background_image">
                                 <div id="background_image_preview" style="margin-top: 8px;"></div>
@@ -247,14 +258,14 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label>简介图片</label>
-                                <input type="file" class="form-control" id="intro_image_file" accept="image/*" onchange="previewImage('intro_image', this)">
+                                <input type="file" class="form-control" id="intro_image_file" accept="image/*" onchange="handleImageSelect('intro_image', this)">
                                 <small style="color: #6b7280; font-size: 12px;">建议尺寸：800x600像素，支持JPG、PNG格式</small>
                                 <input type="hidden" name="intro_image" id="intro_image">
                                 <div id="intro_image_preview" style="margin-top: 8px;"></div>
                             </div>
                             <div class="form-group">
                                 <label>企业微信二维码</label>
-                                <input type="file" class="form-control" id="wechat_qrcode_file" accept="image/*" onchange="previewImage('wechat_qrcode', this)">
+                                <input type="file" class="form-control" id="wechat_qrcode_file" accept="image/*" onchange="handleImageSelect('wechat_qrcode', this)">
                                 <small style="color: #6b7280; font-size: 12px;">建议尺寸：400x400像素，支持JPG、PNG格式</small>
                                 <input type="hidden" name="wechat_qrcode" id="wechat_qrcode">
                                 <div id="wechat_qrcode_preview" style="margin-top: 8px;"></div>
@@ -304,7 +315,7 @@
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <div id="addCompanionAvatar_preview" style="flex-shrink: 0;"></div>
                         <div style="flex: 1;">
-                            <input type="file" class="form-control" id="addCompanionAvatar_file" accept="image/*" onchange="previewCompanionAvatar(this)" style="margin-bottom: 4px;">
+                            <input type="file" class="form-control" id="addCompanionAvatar_file" accept="image/*" onchange="handleImageSelect('addCompanionAvatar', this)" style="margin-bottom: 4px;">
                             <small style="color: #6b7280; font-size: 12px;">建议尺寸：200x200像素，支持JPG、PNG格式</small>
                         </div>
                     </div>
@@ -336,8 +347,8 @@
                         <input type="number" class="form-control" id="addCompanionPrice" placeholder="请输入价格" step="0.01">
                     </div>
                     <div class="form-group">
-                        <label>评分（0-5分）</label>
-                        <input type="number" class="form-control" id="addCompanionRating" placeholder="0-5分" step="0.1" min="0" max="5">
+                        <label>评分</label>
+                        <input type="number" class="form-control" id="addCompanionRating" placeholder="0-100分" step="0.1" min="0" max="100">
                     </div>
                 </div>
                 <div class="form-group">
@@ -388,7 +399,7 @@
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <div id="editCompanionAvatar_preview" style="flex-shrink: 0;"></div>
                         <div style="flex: 1;">
-                            <input type="file" class="form-control" id="editCompanionAvatar_file" accept="image/*" onchange="previewCompanionAvatar(this)" style="margin-bottom: 4px;">
+                            <input type="file" class="form-control" id="editCompanionAvatar_file" accept="image/*" onchange="handleImageSelect('editCompanionAvatar', this)" style="margin-bottom: 4px;">
                             <small style="color: #6b7280; font-size: 12px;">建议尺寸：200x200像素，支持JPG、PNG格式</small>
                         </div>
                     </div>
@@ -421,7 +432,7 @@
                     </div>
                     <div class="form-group">
                         <label>评分</label>
-                        <input type="number" class="form-control" id="editCompanionRating" placeholder="0-5分" step="0.1" min="0" max="5">
+                        <input type="number" class="form-control" id="editCompanionRating" placeholder="0-100分" step="0.1" min="0" max="100">
                     </div>
                 </div>
                 <div class="form-group">
@@ -493,7 +504,7 @@
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <div id="addAdminAvatar_preview" style="flex-shrink: 0;"></div>
                         <div style="flex: 1;">
-                            <input type="file" class="form-control" id="addAdminAvatar_file" accept="image/*" onchange="previewAdminAvatar(this)" style="margin-bottom: 4px;">
+                            <input type="file" class="form-control" id="addAdminAvatar_file" accept="image/*" onchange="handleImageSelect('addAdminAvatar', this)" style="margin-bottom: 4px;">
                             <small style="color: #6b7280; font-size: 12px;">建议尺寸：200x200像素，支持JPG、PNG格式</small>
                         </div>
                     </div>
@@ -554,7 +565,7 @@
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <div id="editAdminAvatar_preview" style="flex-shrink: 0;"></div>
                         <div style="flex: 1;">
-                            <input type="file" class="form-control" id="editAdminAvatar_file" accept="image/*" onchange="previewEditAdminAvatar(this)" style="margin-bottom: 4px;">
+                            <input type="file" class="form-control" id="editAdminAvatar_file" accept="image/*" onchange="handleImageSelect('editAdminAvatar', this)" style="margin-bottom: 4px;">
                             <small style="color: #6b7280; font-size: 12px;">建议尺寸：200x200像素，支持JPG、PNG格式</small>
                         </div>
                     </div>
@@ -570,6 +581,6 @@
 
     <!-- 自定义JS -->
     <script src="js/constants.js"></script>
-    <script src="js/admin.js"></script>
+    <script src="js/admin.js?v=20260501020"></script>
 </body>
 </html>

@@ -35,9 +35,9 @@ VALUES
 -- Init companion data
 INSERT INTO companion (nickname, avatar, game_types, ranks, servers, price, rating, description, tags, is_online, created_at, updated_at) 
 VALUES 
-('小仙女', '/images/avatar1.jpg', '王者荣耀', '荣耀王者50星', '微信区', 30.0, 98, '擅长辅助和法师，声音甜美，耐心教学，带你上分带你飞~', '声音甜美,技术流,耐心', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('野王哥哥', '/images/avatar2.jpg', '王者荣耀', '巅峰赛2200', 'QQ区', 50.0, 99, '主玩打野，意识超群，节奏大师，带你体验躺赢的感觉！', '打野大神,意识流,carry全场', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-('LOL高手', '/images/avatar3.jpg', '英雄联盟', '最强王者', '艾欧尼亚', 60.0, 100, '十年老玩家，精通各个位置，教学一流，包教包会！', '全能选手,教学型,经验丰富', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+('小仙女', NULL, '王者荣耀', '荣耀王者50星', '微信区', 30.0, 98, '擅长辅助和法师，声音甜美，耐心教学，带你上分带你飞~', '声音甜美,技术流,耐心', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('野王哥哥', NULL, '王者荣耀', '巅峰赛2200', 'QQ区', 50.0, 99, '主玩打野，意识超群，节奏大师，带你体验躺赢的感觉！', '打野大神,意识流,carry全场', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+('LOL高手', NULL, '英雄联盟', '最强王者', '艾欧尼亚', 60.0, 100, '十年老玩家，精通各个位置，教学一流，包教包会！', '全能选手,教学型,经验丰富', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 -- Init system config data
 INSERT INTO system_config (config_key, config_value, description) VALUES 

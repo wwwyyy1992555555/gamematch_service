@@ -1,10 +1,12 @@
 package com.uogproject.gamematch_service.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.DynamicUpdate;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "companion")
+@DynamicUpdate
 public class Companion {
     
     @Id

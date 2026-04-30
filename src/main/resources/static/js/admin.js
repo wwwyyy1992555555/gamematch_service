@@ -4,7 +4,9 @@
  */
 
 /**
- * 统一的图片错误处理函数
+ * 【弃用】统一的图片错误处理函数
+ * 注意：采用方案2（延迟持久化）后，后端不再验证文件存在性，此函数已不再使用
+ * 保留此函数仅为兼容旧代码，未来版本将删除
  * @param {HTMLImageElement} img - 图片元素
  * @param {string} placeholderText - 占位符文本（可选，默认'无'）
  * @param {boolean} showPlaceholder - 是否显示占位符（true=显示灰色圆形占位符，false=仅隐藏）
@@ -147,25 +149,17 @@ function openModal(modalType) {
         if (modal) {
             modal.classList.add('open');
             
-            // 如果是添加管理员弹窗，初始化显示"无"占位符
+            // 如果是添加管理员弹窗，初始化清空容器
             if (modalType === 'addAdmin') {
                 initAddAdminAvatarPreview();
             }
             
-            // 如果是添加陪玩师弹窗，初始化显示"无"占位符
+            // 如果是添加陪玩师弹窗，初始化清空容器
             if (modalType === 'addCompanion') {
                 initAddCompanionAvatarPreview();
             }
             
-            // 如果是编辑管理员弹窗，初始化清空容器
-            if (modalType === 'editAdmin') {
-                initEditAdminAvatarPreview();
-            }
-            
-            // 如果是编辑陪玩师弹窗，初始化清空容器
-            if (modalType === 'editCompanion') {
-                initEditCompanionAvatarPreview();
-            }
+            // 注意：编辑页面的头像预览由 editAdmin/editCompanion 函数中手动设置，不在这里初始化
         }
     }
 }
@@ -177,6 +171,13 @@ function initAddAdminAvatarPreview() {
     const previewContainer = document.getElementById('addAdminAvatar_preview');
     if (!previewContainer) return;
     previewContainer.innerHTML = '';
+    
+    // 清空头像文件输入框和隐藏字段
+    const avatarFileInput = document.getElementById('addAdminAvatar_file');
+    const avatarHiddenInput = document.getElementById('addAdminAvatar');
+    
+    if (avatarFileInput) avatarFileInput.value = '';
+    if (avatarHiddenInput) avatarHiddenInput.value = '';
 }
 
 /**
@@ -186,6 +187,13 @@ function initEditAdminAvatarPreview() {
     const previewContainer = document.getElementById('editAdminAvatar_preview');
     if (!previewContainer) return;
     previewContainer.innerHTML = '';
+    
+    // 清空头像文件输入框和隐藏字段
+    const avatarFileInput = document.getElementById('editAdminAvatar_file');
+    const avatarHiddenInput = document.getElementById('editAdminAvatar');
+    
+    if (avatarFileInput) avatarFileInput.value = '';
+    if (avatarHiddenInput) avatarHiddenInput.value = '';
 }
 
 /**
@@ -195,6 +203,15 @@ function initAddCompanionAvatarPreview() {
     const previewContainer = document.getElementById('addCompanionAvatar_preview');
     if (!previewContainer) return;
     previewContainer.innerHTML = '';
+    
+    // 清空所有文件输入框
+    const avatarFileInput = document.getElementById('addCompanionAvatar_file');
+    const voiceIntroFileInput = document.getElementById('addCompanionVoiceIntro_file');
+    const videoUrlFileInput = document.getElementById('addCompanionVideoUrl_file');
+    
+    if (avatarFileInput) avatarFileInput.value = '';
+    if (voiceIntroFileInput) voiceIntroFileInput.value = '';
+    if (videoUrlFileInput) videoUrlFileInput.value = '';
 }
 
 /**
@@ -204,6 +221,13 @@ function initEditCompanionAvatarPreview() {
     const previewContainer = document.getElementById('editCompanionAvatar_preview');
     if (!previewContainer) return;
     previewContainer.innerHTML = '';
+    
+    // 清空头像文件输入框和隐藏字段
+    const avatarFileInput = document.getElementById('editCompanionAvatar_file');
+    const avatarHiddenInput = document.getElementById('editCompanionAvatar');
+    
+    if (avatarFileInput) avatarFileInput.value = '';
+    if (avatarHiddenInput) avatarHiddenInput.value = '';
 }
 
 /**
@@ -218,11 +242,11 @@ function closeModal(modalId) {
 }
 
 /**
- * 预览图片（本地预览，不上传）
+ * 处理图片选择事件（验证 + 生成本地预览）
  * @param {string} fieldName - 字段名称
  * @param {HTMLElement} inputElement - 文件输入元素
  */
-function previewImage(fieldName, inputElement) {
+function handleImageSelect(fieldName, inputElement) {
     const file = inputElement.files[0];
     if (!file) return;
     
@@ -233,8 +257,25 @@ function previewImage(fieldName, inputElement) {
         return;
     }
     
-    // 使用Canvas生成临时预览
-    generateTemporaryPreview(fieldName + '_preview', file);
+    // 判断是否为头像（字段名包含'Avatar'）
+    const isAvatar = fieldName.toLowerCase().includes('avatar');
+    
+    // 直接使用FileReader读取原图，浏览器会根据CSS自动缩放
+    generateImagePreview(fieldName + '_preview', file, isAvatar);
+}
+
+/**
+ * 生成图片预览（直接使用原图，浏览器自动缩放）
+ * @param {string} previewId - 预览容器ID
+ * @param {File} file - 文件对象
+ * @param {boolean} isCircle - 是否为圆形（true=头像，false=普通图片）
+ */
+function generateImagePreview(previewId, file, isCircle = false) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        renderImagePreview(previewId, e.target.result, isCircle);
+    };
+    reader.readAsDataURL(file);
 }
 
 /**
@@ -269,8 +310,9 @@ async function uploadImage(fieldName, inputElement) {
             // 设置隐藏字段的值（保存原图路径）
             document.getElementById(fieldName).value = result.url;
             
-            // 使用Canvas生成临时缩略图进行预览
-            generateTemporaryPreview(fieldName + '_preview', file);
+            // 生成预览（浏览器自动缩放）
+            const isAvatar = fieldName.toLowerCase().includes('avatar');
+            generateImagePreview(fieldName + '_preview', file, isAvatar);
             
             alert('上传成功！');
         } else {
@@ -284,65 +326,29 @@ async function uploadImage(fieldName, inputElement) {
 }
 
 /**
- * 使用Canvas生成临时预览（不保存到服务器）
- * @param {string} previewId - 预览容器ID
- * @param {File} file - 文件对象
- */
-function generateTemporaryPreview(previewId, file) {
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            // 创建Canvas
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // 计算缩放比例
-            const maxSize = 300;
-            let width = img.width;
-            let height = img.height;
-            
-            if (width > height) {
-                if (width > maxSize) {
-                    height *= maxSize / width;
-                    width = maxSize;
-                }
-            } else {
-                if (height > maxSize) {
-                    width *= maxSize / height;
-                    height = maxSize;
-                }
-            }
-            
-            canvas.width = width;
-            canvas.height = height;
-            
-            // 绘制缩略图
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            // 转换为DataURL并显示
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-            showImagePreview(previewId, dataUrl);
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-
-/**
- * 显示图片预览
+ * 渲染图片预览 DOM（圆角矩形或圆形）
  * @param {string} previewId - 预览容器ID
  * @param {string} imageUrl - 图片URL
+ * @param {boolean} isCircle - 是否为圆形（true=头像，false=普通图片）
  */
-function showImagePreview(previewId, imageUrl) {
+function renderImagePreview(previewId, imageUrl, isCircle = false) {
     const previewContainer = document.getElementById(previewId);
     if (!previewContainer) return;
     
+    // 根据类型选择样式
+    const imgStyle = isCircle 
+        ? 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;'
+        : 'max-width: 150px; max-height: 150px; border-radius: 8px; border: 1px solid #e5e7eb;';
+    
+    const btnStyle = isCircle
+        ? 'position: absolute; top: -4px; right: -4px; width: 20px; height: 20px; border-radius: 50%; background: #ef4444; color: white; border: 2px solid white; cursor: pointer; font-size: 14px; line-height: 1; display: flex; align-items: center; justify-content: center; padding: 0;'
+        : 'position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; background: #ef4444; color: white; border: none; cursor: pointer; font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center;';
+    
     previewContainer.innerHTML = `
-        <div style="position: relative; display: inline-block;">
-            <img src="${imageUrl}" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 1px solid #e5e7eb;" onerror="handleImageError(this, '无', false)" />
-            <button type="button" onclick="removeImage('${previewId}', '${imageUrl.replace('/uploads/', '')}')" 
-                    style="position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; background: #ef4444; color: white; border: none; cursor: pointer; font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center;">
+        <div style="position: relative; display: inline-block;${isCircle ? ' width: 60px; height: 60px;' : ''}">
+            <img src="${imageUrl}" style="${imgStyle}" onerror="handleImageError(this, '无', false)" />
+            <button type="button" onclick="removeFilePreview('${previewId}', '${imageUrl.replace('/uploads/', '')}')" 
+                    style="${btnStyle}">
                 ×
             </button>
         </div>
@@ -396,11 +402,11 @@ function clearLocalPreview(previewId, fieldName) {
 }
 
 /**
- * 删除图片
+ * 删除文件预览（统一处理所有文件类型：图片、头像、音频、视频）
  * @param {string} previewId - 预览容器ID
- * @param {string} filename - 文件名
+ * @param {string} filename - 文件名（可选，目前未使用）
  */
-function removeImage(previewId, filename) {
+function removeFilePreview(previewId, filename) {
     const previewContainer = document.getElementById(previewId);
     const fieldName = previewId.replace('_preview', '');
     
@@ -558,7 +564,7 @@ function appendCompanionTable(companions) {
         const rating = companion.rating ? companion.rating.toFixed(1) : '-';
 
         tr.innerHTML = `
-            <td>${avatar ? `<img src="${avatar}" alt="头像" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" onerror="handleImageError(this)">` : '<div style="width: 40px; height: 40px; border-radius: 50%; background-color: #f3f4f6; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 12px;">无</div>'}</td>
+            <td>${avatar ? `<img src="${avatar}" alt="头像" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" onerror="handleImageError(this)">` : ''}</td>
             <td>${escapeHtml(companion.nickname)}</td>
             <td>${escapeHtml(tags)}</td>
             <td>${price}</td>
@@ -609,7 +615,7 @@ function renderCompanionTable(companions) {
         const rating = companion.rating ? companion.rating.toFixed(1) : '-';
 
         tr.innerHTML = `
-            <td>${avatar ? `<img src="${avatar}" alt="头像" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" onerror="handleImageError(this)">` : '<div style="width: 40px; height: 40px; border-radius: 50%; background-color: #f3f4f6; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 12px;">无</div>'}</td>
+            <td>${avatar ? `<img src="${avatar}" alt="头像" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" onerror="handleImageError(this)">` : ''}</td>
             <td>${escapeHtml(companion.nickname)}</td>
             <td>${escapeHtml(tags)}</td>
             <td>${price}</td>
@@ -643,20 +649,23 @@ function renderCompanionTable(companions) {
 /**
  * 预览陪玩师头像（上传前预览）
  */
-function previewCompanionAvatar(inputElement) {
-    const file = inputElement.files[0];
+/**
+ * 通用头像预览处理函数（统一处理4个页面的头像逻辑）
+ * @param {File} file - 选择的图片文件
+ * @param {string} previewContainerId - 预览容器ID
+ * @param {string} fileInputId - 文件输入框ID
+ * @param {string} hiddenInputId - 隐藏字段ID
+ */
+function handleAvatarPreview(file, previewContainerId, fileInputId, hiddenInputId) {
     if (!file) return;
     
     // 验证文件大小（5MB）
     if (file.size > 5 * 1024 * 1024) {
         alert('图片大小不能超过5MB');
-        inputElement.value = '';
+        const fileInput = document.getElementById(fileInputId);
+        if (fileInput) fileInput.value = '';
         return;
     }
-    
-    // 判断是新增还是编辑弹窗
-    const isAddModal = inputElement.id === 'addCompanionAvatar_file';
-    const previewContainerId = isAddModal ? 'addCompanionAvatar_preview' : 'editCompanionAvatar_preview';
     
     // 使用Canvas生成临时预览
     const reader = new FileReader();
@@ -690,7 +699,15 @@ function previewCompanionAvatar(inputElement) {
             const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
             
             const previewContainer = document.getElementById(previewContainerId);
+            const fileInput = document.getElementById(fileInputId);
+            const hiddenInput = document.getElementById(hiddenInputId);
+            
             if (!previewContainer) return;
+            
+            // 先清空所有相关元素
+            previewContainer.innerHTML = '';
+            if (fileInput) fileInput.value = '';
+            if (hiddenInput) hiddenInput.value = '';
             
             // 创建圆形容器
             const avatarWrapper = document.createElement('div');
@@ -704,7 +721,11 @@ function previewCompanionAvatar(inputElement) {
             // 创建删除按钮
             const deleteBtn = document.createElement('button');
             deleteBtn.type = 'button';
-            deleteBtn.onclick = function() { removeCompanionAvatar(isAddModal); };
+            deleteBtn.onclick = function() {
+                previewContainer.innerHTML = '';
+                if (fileInput) fileInput.value = '';
+                if (hiddenInput) hiddenInput.value = '';
+            };
             deleteBtn.style.cssText = `
                 position: absolute;
                 top: -4px;
@@ -728,7 +749,6 @@ function previewCompanionAvatar(inputElement) {
             // 组装元素
             avatarWrapper.appendChild(avatarImg);
             avatarWrapper.appendChild(deleteBtn);
-            previewContainer.innerHTML = '';
             previewContainer.appendChild(avatarWrapper);
         };
         img.src = e.target.result;
@@ -737,23 +757,82 @@ function previewCompanionAvatar(inputElement) {
 }
 
 /**
- * 删除陪玩师头像预览
+ * 通用头像显示函数（用于编辑页面展示已有头像）
+ * @param {string} avatarUrl - 头像URL
+ * @param {string} previewContainerId - 预览容器ID
+ * @param {string} fileInputId - 文件输入框ID
+ * @param {string} hiddenInputId - 隐藏字段ID
  */
-function removeCompanionAvatar(isAdd) {
-    const prefix = isAdd ? 'add' : 'edit';
-    const previewContainer = document.getElementById(`${prefix}CompanionAvatar_preview`);
-    const fileInput = document.getElementById(`${prefix}CompanionAvatar_file`);
+function showExistingAvatar(avatarUrl, previewContainerId, fileInputId, hiddenInputId) {
+    const previewContainer = document.getElementById(previewContainerId);
+    const hiddenInput = document.getElementById(hiddenInputId);
+    const fileInput = document.getElementById(fileInputId);
     
-    if (previewContainer) {
-        previewContainer.innerHTML = '';
-    }
-    if (fileInput) {
-        fileInput.value = '';
+    // 先清空所有相关元素
+    if (previewContainer) previewContainer.innerHTML = '';
+    if (hiddenInput) hiddenInput.value = '';
+    if (fileInput) fileInput.value = '';
+    
+    // 如果有头像，显示预览
+    if (avatarUrl && avatarUrl.trim() !== '') {
+        // 设置隐藏字段
+        if (hiddenInput) hiddenInput.value = avatarUrl;
+        
+        // 创建预览容器
+        if (previewContainer) {
+            // 创建圆形容器
+            const avatarWrapper = document.createElement('div');
+            avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
+            
+            // 创建图片元素
+            const avatarImg = document.createElement('img');
+            avatarImg.src = avatarUrl;
+            avatarImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;';
+            
+            // 添加错误处理
+            avatarImg.onerror = function() {
+                this.style.display = 'none';
+            };
+            
+            // 创建删除按钮
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.onclick = function() {
+                if (previewContainer) previewContainer.innerHTML = '';
+                if (fileInput) fileInput.value = '';
+                if (hiddenInput) hiddenInput.value = '';
+            };
+            deleteBtn.style.cssText = `
+                position: absolute;
+                top: -4px;
+                right: -4px;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: #ef4444;
+                color: white;
+                border: 2px solid white;
+                cursor: pointer;
+                font-size: 14px;
+                line-height: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+            `;
+            deleteBtn.textContent = '×';
+            
+            // 组装元素
+            avatarWrapper.appendChild(avatarImg);
+            avatarWrapper.appendChild(deleteBtn);
+            previewContainer.appendChild(avatarWrapper);
+        }
     }
 }
 
 /**
- * 预览陪玩师音频（本地预览，不上传）
+ * 预览陪玩师音频（全局函数，与系统设置逻辑一致）
+ * @param {HTMLElement} inputElement - 文件输入元素
  */
 function previewCompanionAudio(inputElement) {
     const file = inputElement.files[0];
@@ -782,11 +861,11 @@ function previewCompanionAudio(inputElement) {
     audio.src = objectUrl;
     audio.style.cssText = 'width: 100%; max-width: 300px;';
     
-    // 创建删除按钮
+    // 创建删除按钮（调用全局函数，与系统设置逻辑一致）
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
     deleteBtn.textContent = '×';
-    deleteBtn.onclick = function() { removeCompanionAudio(isAdd); };
+    deleteBtn.onclick = function() { removeFilePreview(previewId, ''); };
     deleteBtn.style.cssText = `
         margin-left: 8px;
         padding: 4px 8px;
@@ -804,27 +883,8 @@ function previewCompanionAudio(inputElement) {
 }
 
 /**
- * 删除陪玩师音频
- */
-function removeCompanionAudio(isAdd) {
-    const prefix = isAdd ? 'add' : 'edit';
-    const previewContainer = document.getElementById(`${prefix}CompanionVoiceIntro_preview`);
-    const fileInput = document.getElementById(`${prefix}CompanionVoiceIntro_file`);
-    const hiddenInput = document.getElementById(`${prefix}CompanionVoiceIntro`);
-    
-    if (previewContainer) {
-        previewContainer.innerHTML = '';
-    }
-    if (fileInput) {
-        fileInput.value = '';
-    }
-    if (hiddenInput) {
-        hiddenInput.value = '';
-    }
-}
-
-/**
- * 预览陪玩师视频（本地预览，不上传）
+ * 预览陪玩师视频（全局函数，与系统设置逻辑一致）
+ * @param {HTMLElement} inputElement - 文件输入元素
  */
 function previewCompanionVideo(inputElement) {
     const file = inputElement.files[0];
@@ -853,11 +913,11 @@ function previewCompanionVideo(inputElement) {
     video.src = objectUrl;
     video.style.cssText = 'width: 100%; max-width: 400px; max-height: 250px; border-radius: 8px;';
     
-    // 创建删除按钮
+    // 创建删除按钮（调用全局函数，与系统设置逻辑一致）
     const deleteBtn = document.createElement('button');
     deleteBtn.type = 'button';
     deleteBtn.textContent = '×';
-    deleteBtn.onclick = function() { removeCompanionVideo(isAdd); };
+    deleteBtn.onclick = function() { removeFilePreview(previewId, ''); };
     deleteBtn.style.cssText = `
         margin-top: 8px;
         padding: 4px 8px;
@@ -872,26 +932,6 @@ function previewCompanionVideo(inputElement) {
     previewContainer.innerHTML = '';
     previewContainer.appendChild(video);
     previewContainer.appendChild(deleteBtn);
-}
-
-/**
- * 删除陪玩师视频
- */
-function removeCompanionVideo(isAdd) {
-    const prefix = isAdd ? 'add' : 'edit';
-    const previewContainer = document.getElementById(`${prefix}CompanionVideoUrl_preview`);
-    const fileInput = document.getElementById(`${prefix}CompanionVideoUrl_file`);
-    const hiddenInput = document.getElementById(`${prefix}CompanionVideoUrl`);
-    
-    if (previewContainer) {
-        previewContainer.innerHTML = '';
-    }
-    if (fileInput) {
-        fileInput.value = '';
-    }
-    if (hiddenInput) {
-        hiddenInput.value = '';
-    }
 }
 
 /**
@@ -912,24 +952,14 @@ async function saveCompanion() {
     const voiceIntroFile = document.getElementById('addCompanionVoiceIntro_file').files[0];
     const videoUrlFile = document.getElementById('addCompanionVideoUrl_file').files[0];
     
-    // 校验必填字段
-    if (!nickname) {
-        alert('请输入昵称');
-        return;
-    }
-    if (!gameTypes) {
-        alert('请输入游戏类型');
-        return;
-    }
-    
     try {
         // 使用FormData传递所有数据（包含文件）
         const formData = new FormData();
-        formData.append('nickname', nickname);
-        formData.append('gameTypes', gameTypes);
+        formData.append('nickname', nickname || '');
+        formData.append('gameTypes', gameTypes || '');
         formData.append('description', description || '');
         formData.append('tags', tags || '');
-        formData.append('price', price || '');
+        formData.append('price', price || '0');
         formData.append('rating', rating || '');
         formData.append('ranks', ranks || '');
         formData.append('servers', servers || '');
@@ -986,12 +1016,8 @@ async function saveCompanion() {
  * @param {number} id - 管理员ID
  */
 async function editAdmin(id) {
-    console.log('editAdmin called with id:', id);
     try {
-        // 直接获取单个管理员信息
-        console.log('Fetching admin by id...');
         const response = await fetch(`/api/v1/admin/admin/${id}`);
-        console.log('Response status:', response.status);
         
         if (!response.ok) {
             alert('获取管理员信息失败');
@@ -999,7 +1025,6 @@ async function editAdmin(id) {
         }
         
         const admin = await response.json();
-        console.log('Admin loaded:', admin);
         
         if (!admin) {
             alert('管理员不存在');
@@ -1011,66 +1036,24 @@ async function editAdmin(id) {
         document.getElementById('editAdminUsername').value = admin.username || '';
         document.getElementById('editAdminRole').value = admin.role || '2';
         
-        // 设置头像预览
-        const previewContainer = document.getElementById('editAdminAvatar_preview');
-        // 先清空容器
-        if (previewContainer) {
-            previewContainer.innerHTML = '';
+        // 先清空头像预览容器（防止显示上一次的数据）
+        const avatarPreview = document.getElementById('editAdminAvatar_preview');
+        if (avatarPreview) {
+            avatarPreview.innerHTML = '';
         }
+        document.getElementById('editAdminAvatar').value = '';
+        document.getElementById('editAdminAvatar_file').value = '';
         
-        if (admin.avatar) {
-            // 使用圆形头像样式
-            const avatarWrapper = document.createElement('div');
-            avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
-            
-            // 创建图片元素
-            const avatarImg = document.createElement('img');
-            avatarImg.src = admin.avatar;
-            avatarImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;';
-            
-            // 创建删除按钮
-            const deleteBtn = document.createElement('button');
-            deleteBtn.type = 'button';
-            deleteBtn.onclick = function() { removeEditAdminAvatar(); };
-            deleteBtn.style.cssText = `
-                position: absolute;
-                top: -4px;
-                right: -4px;
-                width: 20px;
-                height: 20px;
-                border-radius: 50%;
-                background: #ef4444;
-                color: white;
-                border: 2px solid white;
-                cursor: pointer;
-                font-size: 14px;
-                line-height: 1;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 0;
-            `;
-            deleteBtn.textContent = '×';
-            
-            // 组装元素
-            avatarWrapper.appendChild(avatarImg);
-            avatarWrapper.appendChild(deleteBtn);
-            previewContainer.innerHTML = '';
-            previewContainer.appendChild(avatarWrapper);
-            
+        // 设置头像预览（圆形样式）
+        if (admin.avatar && admin.avatar.trim() !== '') {
+            renderImagePreview('editAdminAvatar_preview', admin.avatar, true);  // true=圆形
             document.getElementById('editAdminAvatar').value = admin.avatar;
-        } else {
-            // 没有头像，保持容器为空
-            document.getElementById('editAdminAvatar').value = '';
         }
         
         // 打开弹窗
-        console.log('Opening modal...');
         openModal('editAdmin');
-        console.log('Modal opened');
         
     } catch (error) {
-        console.error('editAdmin error:', error);
         alert('加载失败，请检查网络连接');
     }
 }
@@ -1085,8 +1068,6 @@ async function updateAdmin() {
         const password = document.getElementById('editAdminPassword').value.trim();
         const role = parseInt(document.getElementById('editAdminRole').value);
         const avatar = document.getElementById('editAdminAvatar').value;
-        
-        console.log('Updating admin:', { id, username, role, hasPassword: !!password, hasAvatar: !!avatar });
         
         if (!id) {
             alert('管理员ID缺失');
@@ -1114,15 +1095,12 @@ async function updateAdmin() {
             formData.append('avatarFile', avatarFileInput.files[0]);
         }
         
-        console.log('Sending request to:', `/api/v1/admin/admin/${id}`);
         const response = await fetch(`/api/v1/admin/admin/${id}`, {
             method: 'PUT',
             body: formData
         });
         
-        console.log('Response status:', response.status);
         const result = await response.json();
-        console.log('Response data:', result);
         
         if (!result.success) {
             alert('更新失败: ' + result.message);
@@ -1145,7 +1123,6 @@ async function updateAdmin() {
         loadAdminList();
         
     } catch (error) {
-        console.error('updateAdmin error:', error);
         alert('更新失败，请检查网络连接');
     }
 }
@@ -1220,19 +1197,50 @@ async function editCompanion(id) {
         document.getElementById('editCompanionVoiceIntro').value = companion.voiceIntro || '';
         document.getElementById('editCompanionVideoUrl').value = companion.videoUrl || '';
         
+        // 先清空头像预览容器（防止显示上一次的数据）
+        const avatarPreview = document.getElementById('editCompanionAvatar_preview');
+        if (avatarPreview) {
+            avatarPreview.innerHTML = '';
+        }
+        document.getElementById('editCompanionAvatar').value = '';
+        document.getElementById('editCompanionAvatar_file').value = '';
+        
+        // 清空音频预览容器
+        const audioPreview = document.getElementById('editCompanionVoiceIntro_preview');
+        if (audioPreview) {
+            audioPreview.innerHTML = '';
+        }
+        document.getElementById('editCompanionVoiceIntro').value = '';
+        document.getElementById('editCompanionVoiceIntro_file').value = '';
+        
+        // 清空视频预览容器
+        const videoPreview = document.getElementById('editCompanionVideoUrl_preview');
+        if (videoPreview) {
+            videoPreview.innerHTML = '';
+        }
+        document.getElementById('editCompanionVideoUrl').value = '';
+        document.getElementById('editCompanionVideoUrl_file').value = '';
+        
+        // 设置头像预览（圆形样式）
+        if (companion.avatar && companion.avatar.trim() !== '') {
+            renderImagePreview('editCompanionAvatar_preview', companion.avatar, true);  // true=圆形
+            document.getElementById('editCompanionAvatar').value = companion.avatar;
+        }
+        
         // 设置音频预览
         if (companion.voiceIntro) {
-            const audioPreview = document.getElementById('editCompanionVoiceIntro_preview');
-            if (audioPreview) {
+            const audioPreviewContainer = document.getElementById('editCompanionVoiceIntro_preview');
+            if (audioPreviewContainer) {
                 const audio = document.createElement('audio');
                 audio.controls = true;
                 audio.src = companion.voiceIntro;
                 audio.style.cssText = 'width: 100%; max-width: 300px;';
                 
+                // 创建删除按钮（调用全局函数，与系统设置逻辑一致）
                 const deleteBtn = document.createElement('button');
                 deleteBtn.type = 'button';
                 deleteBtn.textContent = '×';
-                deleteBtn.onclick = function() { removeCompanionAudio(false); };
+                deleteBtn.onclick = function() { removeFilePreview('editCompanionVoiceIntro_preview', ''); };
                 deleteBtn.style.cssText = `
                     margin-left: 8px;
                     padding: 4px 8px;
@@ -1244,25 +1252,26 @@ async function editCompanion(id) {
                     font-size: 12px;
                 `;
                 
-                audioPreview.innerHTML = '';
-                audioPreview.appendChild(audio);
-                audioPreview.appendChild(deleteBtn);
+                audioPreviewContainer.innerHTML = '';
+                audioPreviewContainer.appendChild(audio);
+                audioPreviewContainer.appendChild(deleteBtn);
             }
         }
         
         // 设置视频预览
         if (companion.videoUrl) {
-            const videoPreview = document.getElementById('editCompanionVideoUrl_preview');
-            if (videoPreview) {
+            const videoPreviewContainer = document.getElementById('editCompanionVideoUrl_preview');
+            if (videoPreviewContainer) {
                 const video = document.createElement('video');
                 video.controls = true;
                 video.src = companion.videoUrl;
                 video.style.cssText = 'width: 100%; max-width: 400px; max-height: 250px; border-radius: 8px;';
                 
+                // 创建删除按钮（调用全局函数，与系统设置逻辑一致）
                 const deleteBtn = document.createElement('button');
                 deleteBtn.type = 'button';
                 deleteBtn.textContent = '×';
-                deleteBtn.onclick = function() { removeCompanionVideo(false); };
+                deleteBtn.onclick = function() { removeFilePreview('editCompanionVideoUrl_preview', ''); };
                 deleteBtn.style.cssText = `
                     margin-top: 8px;
                     padding: 4px 8px;
@@ -1274,61 +1283,10 @@ async function editCompanion(id) {
                     font-size: 12px;
                 `;
                 
-                videoPreview.innerHTML = '';
-                videoPreview.appendChild(video);
-                videoPreview.appendChild(deleteBtn);
+                videoPreviewContainer.innerHTML = '';
+                videoPreviewContainer.appendChild(video);
+                videoPreviewContainer.appendChild(deleteBtn);
             }
-        }
-        
-        // 设置头像预览
-        const previewContainer = document.getElementById('editCompanionAvatar_preview');
-        // 先清空容器
-        if (previewContainer) {
-            previewContainer.innerHTML = '';
-        }
-        
-        if (companion.avatar) {
-            // 如果有头像，显示圆形预览
-            if (previewContainer) {
-                const avatarWrapper = document.createElement('div');
-                avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
-                
-                const avatarImg = document.createElement('img');
-                avatarImg.src = companion.avatar;
-                avatarImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;';
-                
-                const deleteBtn = document.createElement('button');
-                deleteBtn.type = 'button';
-                deleteBtn.onclick = function() { removeCompanionAvatar(false); };
-                deleteBtn.style.cssText = `
-                    position: absolute;
-                    top: -4px;
-                    right: -4px;
-                    width: 20px;
-                    height: 20px;
-                    border-radius: 50%;
-                    background: #ef4444;
-                    color: white;
-                    border: 2px solid white;
-                    cursor: pointer;
-                    font-size: 14px;
-                    line-height: 1;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 0;
-                `;
-                deleteBtn.textContent = '×';
-                
-                avatarWrapper.appendChild(avatarImg);
-                avatarWrapper.appendChild(deleteBtn);
-                previewContainer.innerHTML = '';
-                previewContainer.appendChild(avatarWrapper);
-            }
-            document.getElementById('editCompanionAvatar').value = companion.avatar;
-        } else {
-            // 没有头像，保持容器为空
-            document.getElementById('editCompanionAvatar').value = '';
         }
         
         // 打开弹窗
@@ -1359,20 +1317,10 @@ async function updateCompanion() {
         const voiceIntroFile = document.getElementById('editCompanionVoiceIntro_file').files[0];
         const videoUrlFile = document.getElementById('editCompanionVideoUrl_file').files[0];
         
-        // 校验必填字段
-        if (!nickname) {
-            alert('请输入昵称');
-            return;
-        }
-        if (!gameTypes) {
-            alert('请输入游戏类型');
-            return;
-        }
-        
         // 使用FormData传递所有数据（包含文件）
         const formData = new FormData();
-        formData.append('nickname', nickname);
-        formData.append('gameTypes', gameTypes);
+        formData.append('nickname', nickname || '');
+        formData.append('gameTypes', gameTypes || '');
         formData.append('description', description || '');
         formData.append('tags', tags || '');
         formData.append('price', price || '');
@@ -1747,106 +1695,13 @@ function showAdminAvatarPreview(previewId, imageUrl) {
     
     previewContainer.innerHTML = `
         <div style="position: relative; display: inline-block;">
-            <img src="${imageUrl}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;" onerror="handleImageError(this, '无', true)" />
+            <img src="${imageUrl}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;" onerror="handleImageError(this, '无', false)" />
         </div>
     `;
 }
 
 /**
- * 预览添加管理员头像（本地预览，不上传）
- * @param {HTMLElement} inputElement - 文件输入元素
- */
-function previewAdminAvatar(inputElement) {
-    const file = inputElement.files[0];
-    if (!file) return;
-    
-    // 验证文件大小（5MB）
-    if (file.size > 5 * 1024 * 1024) {
-        alert('图片大小不能超过5MB');
-        inputElement.value = '';
-        return;
-    }
-    
-    // 使用Canvas生成临时预览
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // 计算缩放比例
-            const maxSize = 300;
-            let width = img.width;
-            let height = img.height;
-            
-            if (width > height) {
-                if (width > maxSize) {
-                    height *= maxSize / width;
-                    width = maxSize;
-                }
-            } else {
-                if (height > maxSize) {
-                    width *= maxSize / height;
-                    height = maxSize;
-                }
-            }
-            
-            canvas.width = width;
-            canvas.height = height;
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-            
-            const previewContainer = document.getElementById('addAdminAvatar_preview');
-            if (!previewContainer) return;
-            
-            // 创建圆形容器
-            const avatarWrapper = document.createElement('div');
-            avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
-            
-            // 创建图片元素
-            const avatarImg = document.createElement('img');
-            avatarImg.src = dataUrl;
-            avatarImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;';
-            
-            // 创建删除按钮
-            const deleteBtn = document.createElement('button');
-            deleteBtn.type = 'button';
-            deleteBtn.onclick = function() { removeAddAdminAvatar(); };
-            deleteBtn.style.cssText = `
-                position: absolute;
-                top: -4px;
-                right: -4px;
-                width: 20px;
-                height: 20px;
-                border-radius: 50%;
-                background: #ef4444;
-                color: white;
-                border: 2px solid white;
-                cursor: pointer;
-                font-size: 14px;
-                line-height: 1;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 0;
-            `;
-            deleteBtn.textContent = '×';
-            
-            // 组装元素
-            avatarWrapper.appendChild(avatarImg);
-            avatarWrapper.appendChild(deleteBtn);
-            previewContainer.innerHTML = '';
-            previewContainer.appendChild(avatarWrapper);
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-
-/**
- * 删除添加管理员头像预览
+ * 删除添加管理员头像预览（已弃用，保留兼容）
  */
 function removeAddAdminAvatar() {
     const previewContainer = document.getElementById('addAdminAvatar_preview');
@@ -1860,98 +1715,6 @@ function removeAddAdminAvatar() {
     }
 }
 
-/**
- * 预览编辑管理员头像（本地预览，不上传）
- * @param {HTMLElement} inputElement - 文件输入元素
- */
-function previewEditAdminAvatar(inputElement) {
-    const file = inputElement.files[0];
-    if (!file) return;
-    
-    // 验证文件大小（5MB）
-    if (file.size > 5 * 1024 * 1024) {
-        alert('图片大小不能超过5MB');
-        inputElement.value = '';
-        return;
-    }
-    
-    // 使用Canvas生成临时预览
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const img = new Image();
-        img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            // 计算缩放比例
-            const maxSize = 300;
-            let width = img.width;
-            let height = img.height;
-            
-            if (width > height) {
-                if (width > maxSize) {
-                    height *= maxSize / width;
-                    width = maxSize;
-                }
-            } else {
-                if (height > maxSize) {
-                    width *= maxSize / height;
-                    height = maxSize;
-                }
-            }
-            
-            canvas.width = width;
-            canvas.height = height;
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
-            
-            const previewContainer = document.getElementById('editAdminAvatar_preview');
-            if (!previewContainer) return;
-            
-            // 创建圆形容器
-            const avatarWrapper = document.createElement('div');
-            avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
-            
-            // 创建图片元素
-            const avatarImg = document.createElement('img');
-            avatarImg.src = dataUrl;
-            avatarImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;';
-            
-            // 创建删除按钮
-            const deleteBtn = document.createElement('button');
-            deleteBtn.type = 'button';
-            deleteBtn.onclick = function() { removeEditAdminAvatar(); };
-            deleteBtn.style.cssText = `
-                position: absolute;
-                top: -4px;
-                right: -4px;
-                width: 20px;
-                height: 20px;
-                border-radius: 50%;
-                background: #ef4444;
-                color: white;
-                border: 2px solid white;
-                cursor: pointer;
-                font-size: 14px;
-                line-height: 1;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 0;
-            `;
-            deleteBtn.textContent = '×';
-            
-            // 组装元素
-            avatarWrapper.appendChild(avatarImg);
-            avatarWrapper.appendChild(deleteBtn);
-            previewContainer.innerHTML = '';
-            previewContainer.appendChild(avatarWrapper);
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
 
 
 /**
@@ -1996,7 +1759,60 @@ document.addEventListener('DOMContentLoaded', function() {
             clearBtn.style.display = this.value ? 'block' : 'none';
         });
     }
+    
+    // 监听陪玩师搜索框输入
+    const companionSearchInput = document.getElementById('companionSearchInput');
+    const companionClearBtn = document.getElementById('companionSearchClearBtn');
+    
+    if (companionSearchInput && companionClearBtn) {
+        companionSearchInput.addEventListener('input', function() {
+            companionClearBtn.style.display = this.value ? 'block' : 'none';
+        });
+    }
 });
+
+/**
+ * 搜索陪玩师（按昵称、标签、游戏类型）
+ */
+async function searchCompanion() {
+    const keyword = document.getElementById('companionSearchInput').value.trim();
+    
+    try {
+        // 调用后端接口，传递关键字参数
+        const url = keyword ? `/api/v1/admin/companions?keyword=${encodeURIComponent(keyword)}` : '/api/v1/admin/companions';
+        const response = await fetch(url);
+        
+        if (response.ok) {
+            const result = await response.json();
+            const companions = result.data || [];
+            
+            // 重置分页状态
+            companionPage = 1;
+            companionHasMore = false; // 搜索结果不分页，禁用加载更多
+            
+            renderCompanionTable(companions);
+        } else {
+            alert('搜索失败，请重试');
+        }
+    } catch (error) {
+        console.error('搜索陪玩师失败:', error);
+        alert('搜索失败，请检查网络连接');
+    }
+}
+
+/**
+ * 清空陪玩师搜索并重新加载列表
+ */
+function clearCompanionSearch() {
+    document.getElementById('companionSearchInput').value = '';
+    document.getElementById('companionSearchClearBtn').style.display = 'none';
+    
+    // 重置分页状态
+    companionPage = 1;
+    companionHasMore = true;
+    
+    loadCompanionListPaged(1, companionPageSize, false);
+}
 
 /**
  * 加载管理员列表
@@ -2035,7 +1851,7 @@ function renderAdminTable(admins) {
         const avatar = admin.avatar || ''; // 没有头像时显示空
         
         tr.innerHTML = `
-            <td>${avatar ? `<img src="${avatar}" alt="头像" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" onerror="handleImageError(this)">` : '<div style="width: 40px; height: 40px; border-radius: 50%; background-color: #f3f4f6; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 12px;">无</div>'}</td>
+            <td>${avatar ? `<img src="${avatar}" alt="头像" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" onerror="handleImageError(this)">` : ''}</td>
             <td>${escapeHtml(admin.username)}</td>
             <td><span class="badge ${roleClass}">${roleText}</span></td>
             <td>

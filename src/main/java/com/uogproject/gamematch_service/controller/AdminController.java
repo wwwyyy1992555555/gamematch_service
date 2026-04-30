@@ -7,12 +7,14 @@ import com.uogproject.gamematch_service.entity.AdminUser;
 import com.uogproject.gamematch_service.entity.Companion;
 import com.uogproject.gamematch_service.repository.CompanionRepository;
 import com.uogproject.gamematch_service.service.AdminService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.annotation.PostConstruct;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -27,6 +29,7 @@ import java.util.Map;
 /**
  * 管理员控制器
  */
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/admin")
 public class AdminController {
@@ -37,8 +40,21 @@ public class AdminController {
     @Autowired
     private CompanionRepository companionRepository;
     
-    @Value("${file.upload-dir:./uploads}")
+    @Value("${app.upload-dir}")
+    private String uploadDirConfig;
+    
     private String uploadDir;
+    
+    @PostConstruct
+    public void init() {
+        // 转换为绝对路径
+        File dir = new File(uploadDirConfig);
+        if (!dir.isAbsolute()) {
+            dir = new File(System.getProperty("user.dir"), uploadDirConfig);
+        }
+        this.uploadDir = dir.getAbsolutePath();
+        log.info("文件上传目录: {}", this.uploadDir);
+    }
 
     /**
      * 管理员登录接口
@@ -152,8 +168,8 @@ public class AdminController {
      */
     @PostMapping(value = "/companions", consumes = "multipart/form-data")
     public ResponseEntity<Map<String, Object>> addCompanion(
-            @RequestParam String nickname,
-            @RequestParam String gameTypes,
+            @RequestParam(required = false) String nickname,
+            @RequestParam(required = false) String gameTypes,
             @RequestParam(required = false) String description,
             @RequestParam(required = false) String tags,
             @RequestParam(required = false) String price,
@@ -167,14 +183,14 @@ public class AdminController {
         try {
             // 创建陪玩师对象
             Companion companion = new Companion();
-            companion.setNickname(nickname);
-            companion.setGameTypes(gameTypes);
-            companion.setDescription(description);
-            companion.setTags(tags);
+            companion.setNickname(nickname != null ? nickname.trim() : "");
+            companion.setGameTypes(gameTypes != null ? gameTypes.trim() : "");
+            companion.setDescription(description != null ? description.trim() : "");
+            companion.setTags(tags != null ? tags.trim() : "");
             companion.setPrice(price != null && !price.isEmpty() ? Double.parseDouble(price) : null);
             companion.setRating(rating != null && !rating.isEmpty() ? Double.parseDouble(rating) : 100.0);
-            companion.setRanks(ranks);
-            companion.setServers(servers);
+            companion.setRanks(ranks != null ? ranks.trim() : "");
+            companion.setServers(servers != null ? servers.trim() : "");
             companion.setIsOnline(true);
             companion.setCreatedAt(LocalDateTime.now());
             companion.setUpdatedAt(LocalDateTime.now());
@@ -245,15 +261,15 @@ public class AdminController {
             Companion existingCompanion = companionRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("陪玩师不存在"));
             
-            // 更新字段
-            if (nickname != null) existingCompanion.setNickname(nickname);
-            if (gameTypes != null) existingCompanion.setGameTypes(gameTypes);
-            if (description != null) existingCompanion.setDescription(description);
-            if (tags != null) existingCompanion.setTags(tags);
+            // 更新字段（@DynamicUpdate 会自动只更新非null字段）
+            if (nickname != null && !nickname.isEmpty()) existingCompanion.setNickname(nickname.trim());
+            if (gameTypes != null && !gameTypes.isEmpty()) existingCompanion.setGameTypes(gameTypes.trim());
+            if (description != null && !description.isEmpty()) existingCompanion.setDescription(description.trim());
+            if (tags != null && !tags.isEmpty()) existingCompanion.setTags(tags.trim());
             if (price != null && !price.isEmpty()) existingCompanion.setPrice(Double.parseDouble(price));
             if (rating != null && !rating.isEmpty()) existingCompanion.setRating(Double.parseDouble(rating));
-            if (ranks != null) existingCompanion.setRanks(ranks);
-            if (servers != null) existingCompanion.setServers(servers);
+            if (ranks != null && !ranks.isEmpty()) existingCompanion.setRanks(ranks.trim());
+            if (servers != null && !servers.isEmpty()) existingCompanion.setServers(servers.trim());
             
             // 处理头像文件
             if (avatarFile != null && !avatarFile.isEmpty()) {
@@ -320,11 +336,15 @@ public class AdminController {
     @GetMapping("/companions")
     public ResponseEntity<Map<String, Object>> getAdminCompanions(
             @RequestParam(required = false) String gameType,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         
         List<Companion> allCompanions;
-        if (gameType != null && !gameType.isEmpty()) {
+        if (keyword != null && !keyword.isEmpty()) {
+            // 按关键字搜索（昵称、标签、游戏类型）
+            allCompanions = companionRepository.searchByKeyword(keyword);
+        } else if (gameType != null && !gameType.isEmpty()) {
             // 按游戏类型筛选（包含查询）
             allCompanions = companionRepository.findByGameTypesContaining(gameType);
         } else {
@@ -379,14 +399,14 @@ public class AdminController {
             }
 
             // 创建上传目录
-            File uploadPath = new File(uploadDir);
+            File uploadPath = new File(uploadDir + "/image");
             if (!uploadPath.exists()) {
                 uploadPath.mkdirs();
             }
 
             // 生成文件名：companion_avatar{id}.jpg
             String filename = "companion_avatar" + companionId + ".jpg";
-            Path filePath = Paths.get(uploadDir, filename);
+            Path filePath = Paths.get(uploadPath.getPath(), filename);
             File outputFile = filePath.toFile();
             ImageIO.write(originalImage, "jpg", outputFile);
 
@@ -430,12 +450,14 @@ public class AdminController {
             // 生成文件名：companion_voice{id}{extension}
             String filename = "companion_voice" + companionId + extension;
             Path filePath = Paths.get(audioDir.getPath(), filename);
+            
             file.transferTo(filePath.toFile());
 
             String fileUrl = "/audio/" + filename;
             return fileUrl;
 
         } catch (IOException e) {
+            log.error("保存音频文件失败", e);
             return null;
         }
     }
@@ -472,12 +494,14 @@ public class AdminController {
             // 生成文件名：companion_video{id}{extension}
             String filename = "companion_video" + companionId + extension;
             Path filePath = Paths.get(videoDir.getPath(), filename);
+            
             file.transferTo(filePath.toFile());
 
             String fileUrl = "/video/" + filename;
             return fileUrl;
 
         } catch (IOException e) {
+            log.error("保存视频文件失败", e);
             return null;
         }
     }

@@ -14,10 +14,10 @@ spring:
   jpa:
     hibernate:
       ddl-auto: none
-    show-sql: true
+    show-sql: false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         dialect: org.hibernate.dialect.H2Dialect
     
   sql:
@@ -46,6 +46,7 @@ logging:
     root: WARN
     com.uogproject.gamematch_service: DEBUG
     org.springframework.web: WARN
+    org.hibernate.SQL: WARN
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
   file:
@@ -55,4 +56,4 @@ logging:
 
 # 文件上传配置
 app:
-  upload-dir: ./src/main/resources/static/image
+  upload-dir: ./src/main/resources/static
