@@ -388,9 +388,13 @@
                 </div>
                 <div class="form-group">
                     <label>头像</label>
-                    <input type="file" class="form-control" id="addAdminAvatar_file" accept="image/*" onchange="previewAdminAvatar(this)">
-                    <small style="color: #6b7280; font-size: 12px;">建议尺寸：200x200像素，支持JPG、PNG格式</small>
-                    <div id="addAdminAvatar_preview" style="margin-top: 8px;"></div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div id="addAdminAvatar_preview" style="flex-shrink: 0;"></div>
+                        <div style="flex: 1;">
+                            <input type="file" class="form-control" id="addAdminAvatar_file" accept="image/*" onchange="previewAdminAvatar(this)" style="margin-bottom: 4px;">
+                            <small style="color: #6b7280; font-size: 12px;">建议尺寸：200x200像素，支持JPG、PNG格式</small>
+                        </div>
+                    </div>
                     <input type="hidden" name="avatar" id="addAdminAvatar">
                 </div>
                 <!-- 
@@ -425,23 +429,33 @@
                 <input type="hidden" id="editAdminId">
                 <div class="form-group">
                     <label>用户名</label>
-                    <input type="text" class="form-control" id="editAdminUsername" placeholder="请输入用户名">
+                    <input type="text" class="form-control" id="editAdminUsername" placeholder="请输入用户名" readonly style="background-color: #f3f4f6; cursor: not-allowed;">
                 </div>
                 <div class="form-group">
                     <label>密码（留空则不修改）</label>
-                    <input type="password" class="form-control" id="editAdminPassword" placeholder="请输入新密码">
+                    <div style="position: relative; display: flex; align-items: center;">
+                        <input type="password" class="form-control" id="editAdminPassword" style="padding-right: 40px;" placeholder="请输入新密码">
+                        <span onclick="var inp=document.getElementById('editAdminPassword');var ico=this.querySelector('i');inp.type=inp.type=='password'?'text':'password';ico.className=inp.type=='password'?'fa fa-unlock-alt':'fa fa-lock';" style="position: absolute; right: 12px; cursor: pointer; color: #6b7280; font-size: 14px; line-height: 1;">
+                            <i class="fa fa-unlock-alt"></i>
+                        </span>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>角色</label>
                     <select class="form-control" id="editAdminRole">
                         <option value="2">管理员</option>
-                        <option value="1">超级管理员</option>
+                        <!-- <option value="1">超级管理员</option> -->
                     </select>
                 </div>
                 <div class="form-group">
                     <label>头像</label>
-                    <input type="file" class="form-control" id="editAdminAvatar_file" accept="image/*" onchange="previewAdminAvatar(this)">
-                    <div id="editAdminAvatar_preview" style="margin-top: 10px;"></div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div id="editAdminAvatar_preview" style="flex-shrink: 0;"></div>
+                        <div style="flex: 1;">
+                            <input type="file" class="form-control" id="editAdminAvatar_file" accept="image/*" onchange="previewEditAdminAvatar(this)" style="margin-bottom: 4px;">
+                            <small style="color: #6b7280; font-size: 12px;">建议尺寸：200x200像素，支持JPG、PNG格式</small>
+                        </div>
+                    </div>
                     <input type="hidden" id="editAdminAvatar">
                 </div>
             </div>

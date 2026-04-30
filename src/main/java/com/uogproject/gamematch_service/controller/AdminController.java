@@ -47,6 +47,18 @@ public class AdminController {
     }
 
     /**
+     * 根据ID获取管理员详情
+     */
+    @GetMapping("/admin/{id}")
+    public ResponseEntity<AdminUser> getAdminById(@PathVariable Long id) {
+        AdminUser admin = adminService.getAdminById(id);
+        if (admin == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(admin);
+    }
+
+    /**
      * 获取管理员列表
      */
     @GetMapping("/admins")
@@ -109,10 +121,11 @@ public class AdminController {
             @RequestParam(required = false) String username,
             @RequestParam(required = false) String password,
             @RequestParam(required = false) Integer role,
+            @RequestParam(required = false) String avatar,
             @RequestParam(required = false) MultipartFile avatarFile) {
         Map<String, Object> result = new HashMap<>();
         try {
-            AdminUser admin = adminService.updateAdminWithAvatar(id, username, password, role, avatarFile);
+            AdminUser admin = adminService.updateAdminWithAvatar(id, username, password, role, avatar, avatarFile);
             result.put("success", true);
             result.put("message", "更新成功");
             result.put("data", admin);

@@ -208,10 +208,11 @@ public class AdminService {
      * @param username 用户名（不可修改，仅用于显示）
      * @param password 新密码（可选，为空则不修改）
      * @param role 角色
+     * @param avatar 头像URL（可选）
      * @param avatarFile 头像文件（可选）
      * @return 更新后的管理员信息
      */
-    public AdminUser updateAdminWithAvatar(Long id, String username, String password, Integer role, MultipartFile avatarFile) {
+    public AdminUser updateAdminWithAvatar(Long id, String username, String password, Integer role, String avatar, MultipartFile avatarFile) {
         // 校验管理员是否存在
         AdminUser admin = adminUserRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("管理员不存在"));
@@ -226,12 +227,15 @@ public class AdminService {
             admin.setRole(role);
         }
 
-        // 如果有新的头像文件，更新头像
+        // 优先使用新上传的文件，如果没有则使用提供的URL
         if (avatarFile != null && !avatarFile.isEmpty()) {
             String avatarUrl = saveAdminAvatar(avatarFile, id);
             if (avatarUrl != null) {
                 admin.setAvatar(avatarUrl);
             }
+        } else if (avatar != null && !avatar.trim().isEmpty()) {
+            // 使用前端传来的头像URL
+            admin.setAvatar(avatar);
         }
 
         return adminUserRepository.save(admin);

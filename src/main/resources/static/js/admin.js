@@ -146,8 +146,49 @@ function openModal(modalType) {
         const modal = document.getElementById(modalId);
         if (modal) {
             modal.classList.add('open');
+            
+            // 如果是添加管理员弹窗，初始化显示"无"占位符
+            if (modalType === 'addAdmin') {
+                initAddAdminAvatarPreview();
+            }
         }
     }
+}
+
+/**
+ * 初始化添加管理员头像预览（显示"无"占位符）
+ */
+function initAddAdminAvatarPreview() {
+    const previewContainer = document.getElementById('addAdminAvatar_preview');
+    if (!previewContainer) return;
+    
+    // 如果已经有内容，不重复初始化
+    if (previewContainer.children.length > 0) return;
+    
+    // 创建圆形容器
+    const avatarWrapper = document.createElement('div');
+    avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
+    
+    // 创建圆形占位符
+    const placeholder = document.createElement('div');
+    placeholder.className = 'image-placeholder';
+    placeholder.style.cssText = `
+        width: 60px;
+        height: 60px;
+        max-width: 60px;
+        max-height: 60px;
+        border-radius: 50%;
+        background-color: #f3f4f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #9ca3af;
+        font-size: 12px;
+    `;
+    placeholder.textContent = '无';
+    
+    avatarWrapper.appendChild(placeholder);
+    previewContainer.appendChild(avatarWrapper);
 }
 
 /**
@@ -680,20 +721,18 @@ async function saveCompanion() {
 async function editAdmin(id) {
     console.log('editAdmin called with id:', id);
     try {
-        // 从当前列表中查找管理员信息
-        console.log('Fetching admin list...');
-        const response = await fetch('/api/v1/admin/admins');
+        // 直接获取单个管理员信息
+        console.log('Fetching admin by id...');
+        const response = await fetch(`/api/v1/admin/admin/${id}`);
         console.log('Response status:', response.status);
         
         if (!response.ok) {
-            alert('获取管理员列表失败');
+            alert('获取管理员信息失败');
             return;
         }
         
-        const admins = await response.json();
-        console.log('Admins loaded:', admins.length);
-        const admin = admins.find(a => a.id === id);
-        console.log('Found admin:', admin);
+        const admin = await response.json();
+        console.log('Admin loaded:', admin);
         
         if (!admin) {
             alert('管理员不存在');
@@ -708,25 +747,98 @@ async function editAdmin(id) {
         // 设置头像预览
         const previewContainer = document.getElementById('editAdminAvatar_preview');
         if (admin.avatar) {
-            previewContainer.innerHTML = `
-                <div style="position: relative; display: inline-block;">
-                    <img src="${admin.avatar}" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 1px solid #e5e7eb;" />
-                    <button type="button" onclick="removeEditAdminAvatar()" 
-                            style="position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; background: #ef4444; color: white; border: none; cursor: pointer; font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center;">
-                        ×
-                    </button>
-                </div>
+            // 使用圆形头像样式
+            const avatarWrapper = document.createElement('div');
+            avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
+            
+            // 创建圆形占位符
+            const placeholder = document.createElement('div');
+            placeholder.className = 'image-placeholder';
+            placeholder.style.cssText = `
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background-color: #f3f4f6;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #9ca3af;
+                font-size: 12px;
             `;
-            // 动态绑定错误处理
-            const img = previewContainer.querySelector('img');
-            if (img) {
-                img.onerror = function() {
-                    handleImageError(this, '无', false);
-                };
-            }
+            placeholder.textContent = '无';
+            
+            // 创建图片元素
+            const avatarImg = document.createElement('img');
+            avatarImg.src = admin.avatar;
+            avatarImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb; position: absolute; top: 0; left: 0;';
+            
+            // 图片加载成功时隐藏占位符
+            avatarImg.onload = function() {
+                placeholder.style.display = 'none';
+            };
+            
+            // 图片加载失败时显示占位符
+            avatarImg.onerror = function() {
+                this.style.display = 'none';
+                placeholder.style.display = 'flex';
+            };
+            
+            // 创建删除按钮
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.onclick = function() { removeEditAdminAvatar(); };
+            deleteBtn.style.cssText = `
+                position: absolute;
+                top: -4px;
+                right: -4px;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: #ef4444;
+                color: white;
+                border: 2px solid white;
+                cursor: pointer;
+                font-size: 14px;
+                line-height: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+            `;
+            deleteBtn.textContent = '×';
+            
+            // 组装元素
+            avatarWrapper.appendChild(placeholder);
+            avatarWrapper.appendChild(avatarImg);
+            avatarWrapper.appendChild(deleteBtn);
+            previewContainer.innerHTML = '';
+            previewContainer.appendChild(avatarWrapper);
+            
             document.getElementById('editAdminAvatar').value = admin.avatar;
         } else {
+            // 没有头像时显示"无"占位符
+            const avatarWrapper = document.createElement('div');
+            avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
+            
+            const placeholder = document.createElement('div');
+            placeholder.className = 'image-placeholder';
+            placeholder.style.cssText = `
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background-color: #f3f4f6;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #9ca3af;
+                font-size: 12px;
+            `;
+            placeholder.textContent = '无';
+            
+            avatarWrapper.appendChild(placeholder);
             previewContainer.innerHTML = '';
+            previewContainer.appendChild(avatarWrapper);
+            
             document.getElementById('editAdminAvatar').value = '';
         }
         
@@ -752,15 +864,21 @@ async function updateAdmin() {
         const role = parseInt(document.getElementById('editAdminRole').value);
         const avatar = document.getElementById('editAdminAvatar').value;
         
-        if (!username) {
-            alert('请输入用户名');
+        console.log('Updating admin:', { id, username, role, hasPassword: !!password, hasAvatar: !!avatar });
+        
+        if (!id) {
+            alert('管理员ID缺失');
             return;
         }
         
         // 构建FormData
         const formData = new FormData();
-        formData.append('username', username);
-        formData.append('role', role);
+        if (username) {
+            formData.append('username', username);
+        }
+        if (role) {
+            formData.append('role', role);
+        }
         if (avatar) {
             formData.append('avatar', avatar);
         }
@@ -768,12 +886,21 @@ async function updateAdmin() {
             formData.append('password', password);
         }
         
+        // 如果有新的头像文件，也添加到formData
+        const avatarFileInput = document.getElementById('editAdminAvatar_file');
+        if (avatarFileInput && avatarFileInput.files[0]) {
+            formData.append('avatarFile', avatarFileInput.files[0]);
+        }
+        
+        console.log('Sending request to:', `/api/v1/admin/admin/${id}`);
         const response = await fetch(`/api/v1/admin/admin/${id}`, {
             method: 'PUT',
             body: formData
         });
         
+        console.log('Response status:', response.status);
         const result = await response.json();
+        console.log('Response data:', result);
         
         if (!result.success) {
             alert('更新失败: ' + result.message);
@@ -796,6 +923,7 @@ async function updateAdmin() {
         loadAdminList();
         
     } catch (error) {
+        console.error('updateAdmin error:', error);
         alert('更新失败，请检查网络连接');
     }
 }
@@ -1261,7 +1389,23 @@ async function saveSystemConfig() {
 }
 
 /**
- * 预览管理员头像（不上传，仅本地预览）
+ * 显示图片预览（圆形头像版本）
+ * @param {string} previewId - 预览容器ID
+ * @param {string} imageUrl - 图片URL
+ */
+function showAdminAvatarPreview(previewId, imageUrl) {
+    const previewContainer = document.getElementById(previewId);
+    if (!previewContainer) return;
+    
+    previewContainer.innerHTML = `
+        <div style="position: relative; display: inline-block;">
+            <img src="${imageUrl}" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb;" onerror="handleImageError(this, '无', true)" />
+        </div>
+    `;
+}
+
+/**
+ * 预览添加管理员头像（本地预览，不上传）
  * @param {HTMLElement} inputElement - 文件输入元素
  */
 function previewAdminAvatar(inputElement) {
@@ -1284,7 +1428,7 @@ function previewAdminAvatar(inputElement) {
             const ctx = canvas.getContext('2d');
             
             // 计算缩放比例
-            const maxSize = 200;
+            const maxSize = 300;
             let width = img.width;
             let height = img.height;
             
@@ -1307,15 +1451,74 @@ function previewAdminAvatar(inputElement) {
             const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
             
             const previewContainer = document.getElementById('addAdminAvatar_preview');
-            previewContainer.innerHTML = `
-                <div style="position: relative; display: inline-block;">
-                    <img src="${dataUrl}" style="max-width: 150px; max-height: 150px; border-radius: 8px; border: 1px solid #e5e7eb;" onerror="handleImageError(this, '无', false)" />
-                    <button type="button" onclick="removeAdminAvatar()" 
-                            style="position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; border-radius: 50%; background: #ef4444; color: white; border: none; cursor: pointer; font-size: 16px; line-height: 1; display: flex; align-items: center; justify-content: center;">
-                        ×
-                    </button>
-                </div>
+            if (!previewContainer) return;
+            
+            // 创建圆形容器
+            const avatarWrapper = document.createElement('div');
+            avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
+            
+            // 创建圆形占位符（初始显示"无"）
+            const placeholder = document.createElement('div');
+            placeholder.className = 'image-placeholder';
+            placeholder.style.cssText = `
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background-color: #f3f4f6;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #9ca3af;
+                font-size: 12px;
             `;
+            placeholder.textContent = '无';
+            
+            // 创建图片元素
+            const avatarImg = document.createElement('img');
+            avatarImg.src = dataUrl;
+            avatarImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb; position: absolute; top: 0; left: 0;';
+            
+            // 图片加载成功时隐藏占位符
+            avatarImg.onload = function() {
+                placeholder.style.display = 'none';
+            };
+            
+            // 图片加载失败时显示占位符
+            avatarImg.onerror = function() {
+                this.style.display = 'none';
+                placeholder.style.display = 'flex';
+            };
+            
+            // 创建删除按钮
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.onclick = function() { removeAddAdminAvatar(); };
+            deleteBtn.style.cssText = `
+                position: absolute;
+                top: -4px;
+                right: -4px;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: #ef4444;
+                color: white;
+                border: 2px solid white;
+                cursor: pointer;
+                font-size: 14px;
+                line-height: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+            `;
+            deleteBtn.textContent = '×';
+            
+            // 组装元素
+            avatarWrapper.appendChild(placeholder);
+            avatarWrapper.appendChild(avatarImg);
+            avatarWrapper.appendChild(deleteBtn);
+            previewContainer.innerHTML = '';
+            previewContainer.appendChild(avatarWrapper);
         };
         img.src = e.target.result;
     };
@@ -1323,9 +1526,9 @@ function previewAdminAvatar(inputElement) {
 }
 
 /**
- * 删除管理员头像预览
+ * 删除添加管理员头像预览
  */
-function removeAdminAvatar() {
+function removeAddAdminAvatar() {
     const previewContainer = document.getElementById('addAdminAvatar_preview');
     const fileInput = document.getElementById('addAdminAvatar_file');
     
@@ -1336,6 +1539,128 @@ function removeAdminAvatar() {
         fileInput.value = '';
     }
 }
+
+/**
+ * 预览编辑管理员头像（本地预览，不上传）
+ * @param {HTMLElement} inputElement - 文件输入元素
+ */
+function previewEditAdminAvatar(inputElement) {
+    const file = inputElement.files[0];
+    if (!file) return;
+    
+    // 验证文件大小（5MB）
+    if (file.size > 5 * 1024 * 1024) {
+        alert('图片大小不能超过5MB');
+        inputElement.value = '';
+        return;
+    }
+    
+    // 使用Canvas生成临时预览
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 计算缩放比例
+            const maxSize = 300;
+            let width = img.width;
+            let height = img.height;
+            
+            if (width > height) {
+                if (width > maxSize) {
+                    height *= maxSize / width;
+                    width = maxSize;
+                }
+            } else {
+                if (height > maxSize) {
+                    width *= maxSize / height;
+                    height = maxSize;
+                }
+            }
+            
+            canvas.width = width;
+            canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+            
+            const previewContainer = document.getElementById('editAdminAvatar_preview');
+            if (!previewContainer) return;
+            
+            // 创建圆形容器
+            const avatarWrapper = document.createElement('div');
+            avatarWrapper.style.cssText = 'position: relative; display: inline-block; width: 60px; height: 60px;';
+            
+            // 创建圆形占位符（初始显示"无"）
+            const placeholder = document.createElement('div');
+            placeholder.className = 'image-placeholder';
+            placeholder.style.cssText = `
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background-color: #f3f4f6;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: #9ca3af;
+                font-size: 12px;
+            `;
+            placeholder.textContent = '无';
+            
+            // 创建图片元素
+            const avatarImg = document.createElement('img');
+            avatarImg.src = dataUrl;
+            avatarImg.style.cssText = 'width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #e5e7eb; position: absolute; top: 0; left: 0;';
+            
+            // 图片加载成功时隐藏占位符
+            avatarImg.onload = function() {
+                placeholder.style.display = 'none';
+            };
+            
+            // 图片加载失败时显示占位符
+            avatarImg.onerror = function() {
+                this.style.display = 'none';
+                placeholder.style.display = 'flex';
+            };
+            
+            // 创建删除按钮
+            const deleteBtn = document.createElement('button');
+            deleteBtn.type = 'button';
+            deleteBtn.onclick = function() { removeEditAdminAvatar(); };
+            deleteBtn.style.cssText = `
+                position: absolute;
+                top: -4px;
+                right: -4px;
+                width: 20px;
+                height: 20px;
+                border-radius: 50%;
+                background: #ef4444;
+                color: white;
+                border: 2px solid white;
+                cursor: pointer;
+                font-size: 14px;
+                line-height: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 0;
+            `;
+            deleteBtn.textContent = '×';
+            
+            // 组装元素
+            avatarWrapper.appendChild(placeholder);
+            avatarWrapper.appendChild(avatarImg);
+            avatarWrapper.appendChild(deleteBtn);
+            previewContainer.innerHTML = '';
+            previewContainer.appendChild(avatarWrapper);
+        };
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
+
 
 /**
  * 加载管理员列表
