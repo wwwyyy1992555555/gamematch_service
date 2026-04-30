@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>陪玩达人 - 登录</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Tailwind 配置 -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981',
+                        dark: {
+                            100: '#1F2937',
+                            200: '#111827',
+                            300: '#0F172A'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        display: ['Montserrat', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Font Awesome -->
+    <link href="lib/font-awesome.min.css" rel="stylesheet">
+
+    <!-- 自定义CSS -->
+    <link rel="stylesheet" href="css/login.css">
+</head>
+<body class="bg-gray-50 dark:bg-dark-300">
+    <!-- Navigation -->
+    <header class="fixed top-0 left-0 right-0 z-40 transition-all duration-300" id="navbar">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="index.html" class="flex items-center space-x-2">
+                <img src="image/logo.png" alt="Logo" class="h-10 w-10 logo-container">
+                <span class="text-xl font-bold tracking-tight">陪玩<span class="text-primary">达人</span></span>
+            </a>
+            
+            <!-- Desktop Nav -->
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="index.html" class="nav-link" style="color: rgb(55, 65, 81);">首页</a>
+                <a href="index.html#projects" class="nav-link">陪玩达人</a>
+                <a href="index.html#about" class="nav-link">关于我们</a>
+                <a href="index.html#contact" class="nav-link">联系客服</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Login Section -->
+    <section class="min-h-screen flex items-center justify-center pt-20 pb-10 px-4">
+        <!-- Background -->
+        <div class="absolute inset-0 -z-10">
+            <div class="absolute inset-0 bg-gradient-to-br from-black/70 to-black/40 -z-10"></div>
+            <img src="image/hero-bg.jpg" alt="Background" class="w-full h-full object-cover">
+        </div>
+
+        <div class="w-full max-w-md">
+            <!-- Login Card -->
+            <div class="login-card p-8" data-aos="fade-up">
+                <!-- Logo -->
+                <div class="text-center mb-8">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-white rounded-xl shadow-lg mb-4 overflow-hidden logo-container">
+                        <img src="image/logo.png" alt="Logo" class="logo-img">
+                    </div>
+                    <h1 class="text-2xl font-bold text-gray-800 dark:text-white">欢迎回来</h1>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1">登录您的账号</p>
+                </div>
+
+                <!-- Login Form -->
+                <form class="space-y-5" id="loginForm">
+                    <!-- Username -->
+                    <div>
+                        <label class="form-label">
+                            <i class="fa fa-user"></i>账号
+                        </label>
+                        <input type="text" name="username" class="input-field" placeholder="请输入账号" required>
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+                        <label class="form-label">
+                            <i class="fa fa-lock"></i>密码
+                        </label>
+                        <input type="password" name="password" class="input-field" placeholder="请输入密码" required>
+                    </div>
+
+                    <!-- Remember & Forgot -->
+                    <div class="flex items-center justify-between text-sm">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="remember">
+                            <span>记住我</span>
+                        </label>
+                        <!-- <a href="#" class="link">忘记密码?</a> -->
+                    </div>
+
+                    <!-- Login Button -->
+                    <button type="submit" class="btn-login mt-2">
+                        <i class="fa fa-sign-in mr-2"></i>立即登录
+                    </button>
+                </form>
+
+                <!-- <div class="divider">
+                    <div class="divider-line"></div>
+                    <div class="divider-text">
+                        <span>其他方式登录</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button class="btn-secondary">
+                        <i class="fa fa-phone mr-2 text-green-500"></i>手机号登录
+                    </button>
+                    <button class="btn-secondary">
+                        <i class="fa fa-user-plus mr-2 text-primary"></i>注册账号
+                    </button>
+                </div> -->
+            </div>
+
+            <!-- Back to Home -->
+            <div class="text-center mt-6">
+                <a href="index.html" class="inline-flex items-center text-white/80 hover:text-white transition-colors">
+                    <i class="fa fa-arrow-left mr-2"></i>返回首页
+                </a>
+            </div>
+
+            <!-- Footer -->
+            <p class="text-center text-white/60 text-xs mt-8">© 2026 陪玩达人. 保留所有权利.</p>
+        </div>
+    </section>
+
+    <!-- 自定义JS -->
+    <script src="js/login.js"></script>
+</body>
+</html>
