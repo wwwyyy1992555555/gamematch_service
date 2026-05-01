@@ -85,20 +85,44 @@ public class AdminController {
     }
 
     /**
-     * 获取管理员列表
+     * 获取管理员列表（分页）
      */
     @GetMapping("/admins")
-    public ResponseEntity<List<AdminUser>> getAdmins(
-            @RequestParam(required = false) String username) {
-        List<AdminUser> admins;
+    public ResponseEntity<Map<String, Object>> getAdmins(
+            @RequestParam(required = false) String username,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        List<AdminUser> allAdmins;
         if (username != null && !username.isEmpty()) {
             // 按用户名模糊搜索
-            admins = adminService.searchAdminsByUsername(username);
+            allAdmins = adminService.searchAdminsByUsername(username);
         } else {
             // 获取所有管理员
-            admins = adminService.getAllAdmins();
+            allAdmins = adminService.getAllAdmins();
         }
-        return ResponseEntity.ok(admins);
+        
+        // 手动分页
+        int total = allAdmins.size();
+        int fromIndex = (page - 1) * size;
+        int toIndex = Math.min(fromIndex + size, total);
+        
+        List<AdminUser> pagedAdmins;
+        if (fromIndex < total) {
+            pagedAdmins = allAdmins.subList(fromIndex, toIndex);
+        } else {
+            pagedAdmins = List.of(); // 空列表
+        }
+        
+        Map<String, Object> response = new HashMap<>();
+        response.put("code", 200);
+        response.put("message", "success");
+        response.put("data", pagedAdmins);
+        response.put("total", total);
+        response.put("page", page);
+        response.put("size", size);
+        response.put("hasMore", toIndex < total);
+        
+        return ResponseEntity.ok(response);
     }
 
     /**
@@ -176,6 +200,7 @@ public class AdminController {
             @RequestParam(required = false) String rating,
             @RequestParam(required = false) String ranks,
             @RequestParam(required = false) String servers,
+            @RequestParam(required = false) Boolean isOnline,
             @RequestParam(required = false) MultipartFile avatarFile,
             @RequestParam(required = false) MultipartFile voiceIntroFile,
             @RequestParam(required = false) MultipartFile videoUrlFile) {
@@ -191,7 +216,7 @@ public class AdminController {
             companion.setRating(rating != null && !rating.isEmpty() ? Double.parseDouble(rating) : 100.0);
             companion.setRanks(ranks != null ? ranks.trim() : "");
             companion.setServers(servers != null ? servers.trim() : "");
-            companion.setIsOnline(true);
+            companion.setIsOnline(isOnline != null ? isOnline : true);
             companion.setCreatedAt(LocalDateTime.now());
             companion.setUpdatedAt(LocalDateTime.now());
             
@@ -253,6 +278,7 @@ public class AdminController {
             @RequestParam(required = false) String rating,
             @RequestParam(required = false) String ranks,
             @RequestParam(required = false) String servers,
+            @RequestParam(required = false) Boolean isOnline,
             @RequestParam(required = false) MultipartFile avatarFile,
             @RequestParam(required = false) MultipartFile voiceIntroFile,
             @RequestParam(required = false) MultipartFile videoUrlFile) {
@@ -270,6 +296,7 @@ public class AdminController {
             if (rating != null && !rating.isEmpty()) existingCompanion.setRating(Double.parseDouble(rating));
             if (ranks != null && !ranks.isEmpty()) existingCompanion.setRanks(ranks.trim());
             if (servers != null && !servers.isEmpty()) existingCompanion.setServers(servers.trim());
+            if (isOnline != null) existingCompanion.setIsOnline(isOnline);
             
             // 处理头像文件
             if (avatarFile != null && !avatarFile.isEmpty()) {

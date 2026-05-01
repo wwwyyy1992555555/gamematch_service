@@ -244,20 +244,11 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 async function loadFilteredCompanions(filter) {
     try {
-        let url = '/api/v1/companions?page=1&size=20&onlineOnly=false';
+        let url = '/api/v1/companions?page=1&size=20&onlineOnly=true';
         
-        // 根据筛选条件添加游戏类型参数
+        // 根据筛选条件添加游戏类型参数（直接使用游戏名称）
         if (filter !== 'all') {
-            const gameTypeMap = {
-                'ui': '王者荣耀',
-                'photography': '英雄联盟',
-                'illustration': '绝地求生',
-                'web': '其他游戏'
-            };
-            const gameType = gameTypeMap[filter];
-            if (gameType) {
-                url += `&gameType=${encodeURIComponent(gameType)}`;
-            }
+            url += `&gameType=${encodeURIComponent(filter)}`;
         }
         
         const response = await fetch(url);
@@ -265,6 +256,7 @@ async function loadFilteredCompanions(filter) {
             const result = await response.json();
             if (result.code === 200 && result.data) {
                 renderCompanionsGrid(result.data);
+                initCarousel();
             }
         }
     } catch (error) {
@@ -573,16 +565,97 @@ async function loadSystemConfig() {
  */
 async function loadCompanionsList() {
     try {
-        const response = await fetch('/api/v1/companions?page=1&size=20&onlineOnly=false');
+        const response = await fetch('/api/v1/companions?page=1&size=20&onlineOnly=true');
         if (response.ok) {
             const result = await response.json();
             if (result.code === 200 && result.data) {
                 renderCompanionsGrid(result.data);
+                initCarousel();
             }
         }
     } catch (error) {
         console.error('加载陪玩师列表失败:', error);
     }
+}
+
+// 轮播全局变量
+let carouselState = {
+    initialized: false,
+    autoScrollTimer: null,
+    prevBtnClone: null,
+    nextBtnClone: null
+};
+
+/**
+ * 初始化轮播功能
+ */
+/**
+ * 初始化 Swiper 轮播
+ */
+let companionSwiper = null;
+
+function initCarousel() {
+    // 如果已经存在，先销毁
+    if (companionSwiper) {
+        companionSwiper.destroy(true, true);
+        companionSwiper = null;
+    }
+    
+    const swiperEl = document.querySelector('.companion-swiper');
+    if (!swiperEl) return;
+    
+    // 等待 DOM 渲染完成
+    setTimeout(() => {
+        const slides = swiperEl.querySelectorAll('.swiper-slide');
+        if (slides.length === 0) return;
+        
+        // 初始化 Swiper
+        companionSwiper = new Swiper('.companion-swiper', {
+            slidesPerView: 4,
+            spaceBetween: 24,
+            loop: false,
+            speed: 500,
+            
+            // 分页器
+            pagination: {
+                el: '.swiper-pagination',
+                clickable: true,
+                dynamicBullets: false,
+            },
+            
+            // 导航按钮
+            navigation: {
+                nextEl: '.swiper-button-next',
+                prevEl: '.swiper-button-prev',
+            },
+            
+            // 自动播放
+            autoplay: {
+                delay: 5000,
+                disableOnInteraction: false,
+                pauseOnMouseEnter: true,
+            },
+            
+            // 响应式断点
+            breakpoints: {
+                // 小屏幕：2 列
+                320: {
+                    slidesPerView: 2,
+                    spaceBetween: 12,
+                },
+                // 中等屏幕：3 列
+                768: {
+                    slidesPerView: 3,
+                    spaceBetween: 16,
+                },
+                // 大屏幕：4 列
+                1280: {
+                    slidesPerView: 4,
+                    spaceBetween: 24,
+                },
+            },
+        });
+    }, 100);
 }
 
 /**
@@ -597,7 +670,7 @@ function renderCompanionsGrid(companions) {
 
     if (!companions || companions.length === 0) {
         galleryGrid.innerHTML = `
-            <div class="col-span-full text-center py-12">
+            <div class="col-span-full text-center py-12 swiper-slide">
                 <i class="fa fa-users text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
                 <p class="text-gray-500 dark:text-gray-400 text-lg">暂无陪玩师数据</p>
             </div>
@@ -608,9 +681,11 @@ function renderCompanionsGrid(companions) {
     // 渲染每个陪玩师卡片
     companions.forEach((companion, index) => {
         const card = createCompanionCard(companion, index);
+        // 为每个卡片添加 swiper-slide 类
+        card.classList.add('swiper-slide');
         galleryGrid.appendChild(card);
     });
-
+    
     // 重新初始化AOS动画
     if (typeof AOS !== 'undefined') {
         AOS.refresh();

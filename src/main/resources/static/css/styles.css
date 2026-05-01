@@ -228,17 +228,103 @@ h1, h2, h3, h4, h5, h6 {
     ring-color: rgba(59, 130, 246, 0.5);
 }
 
-.gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 1.5rem;
+/* Swiper 轮播样式 */
+.swiper-wrapper.gallery-grid {
+    display: flex;
+    flex-wrap: nowrap;
+    overflow: visible;
+    padding: 0;
+    height: auto;
+    width: auto;
 }
 
-@media (min-width: 768px) {
-    .gallery-grid {
-        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+.swiper-wrapper.gallery-grid .project-card {
+    height: 255px;
+    flex-shrink: 0;
+}
+
+/* Swiper 轮播自定义样式 */
+.companion-swiper .project-card {
+    height: 255px;
+}
+
+/* Swiper 分页器样式 */
+.companion-swiper .swiper-pagination {
+    bottom: 0 !important;
+}
+
+.companion-swiper .swiper-pagination-bullet {
+    width: 10px;
+    height: 10px;
+    background: #d1d5db;
+    opacity: 1;
+    transition: all 0.3s ease;
+}
+
+.companion-swiper .swiper-pagination-bullet-active {
+    background: #3B82F6;
+    width: 24px;
+    border-radius: 5px;
+}
+
+/* Swiper 导航按钮样式 */
+.companion-swiper .swiper-button-next,
+.companion-swiper .swiper-button-prev {
+    color: #1f2937;
+    background: white;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.companion-swiper .swiper-button-next:hover,
+.companion-swiper .swiper-button-prev:hover {
+    background: #3B82F6;
+    color: white;
+}
+
+.companion-swiper .swiper-button-next::after,
+.companion-swiper .swiper-button-prev::after {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+/* 暗色主题适配 */
+.dark .companion-swiper .swiper-button-next,
+.dark .companion-swiper .swiper-button-prev {
+    background: #1f2937;
+    color: #e5e7eb;
+}
+
+.dark .companion-swiper .swiper-button-next:hover,
+.dark .companion-swiper .swiper-button-prev:hover {
+    background: #3B82F6;
+    color: white;
+}
+
+.dark .companion-swiper .swiper-pagination-bullet {
+    background: #4b5563;
+}
+
+.dark .companion-swiper .swiper-pagination-bullet-active {
+    background: #3B82F6;
+}
+
+@media (max-width: 1280px) {
+    .companion-swiper .project-card {
+        height: 200px;
     }
 }
+
+@media (max-width: 768px) {
+    .companion-swiper .project-card {
+        height: 180px;
+    }
+}
+
+
 
 .modal-image-container {
     position: relative;

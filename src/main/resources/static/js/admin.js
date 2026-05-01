@@ -495,21 +495,41 @@ async function loadCurrentAdminInfo() {
 
 // ==================== 陪玩师管理功能 ====================
 
+// 分页相关变量
+let companionPage = 1;
+let companionPageSize = 10;
+let companionTotal = 0;
+let companionKeyword = '';
+
+let adminPage = 1;
+let adminPageSize = 10;
+let adminTotal = 0;
+let adminKeyword = '';
+
 /**
- * 加载陪玩师列表
+ * 加载陪玩师列表（分页）
  */
-async function loadCompanionList() {
+async function loadCompanionList(page = 1, keyword = '') {
+    companionPage = page;
+    companionKeyword = keyword;
+    
     try {
-        // 使用管理员专用接口，查询所有陪玩师（包括离线）
-        const response = await fetch('/api/v1/admin/companions?page=1&size=100');
+        let url = `/api/v1/admin/companions?page=${page}&size=${companionPageSize}`;
+        if (keyword) {
+            url += `&keyword=${encodeURIComponent(keyword)}`;
+        }
+        
+        const response = await fetch(url);
         if (!response.ok) {
             alert('加载陪玩师列表失败，请刷新页面重试');
             return;
         }
         
         const result = await response.json();
-        if (result.code === 200 && result.data) {
+        if (result.code === 200) {
             renderCompanionTable(result.data);
+            companionTotal = result.total || 0;
+            renderPagination('companions', result.page, Math.ceil(result.total / companionPageSize), result.total);
         } else {
             alert('加载陪玩师列表失败: ' + (result.message || '未知错误'));
         }
@@ -523,13 +543,13 @@ async function loadCompanionList() {
  * @param {Array} companions - 陪玩师列表数据
  */
 function renderCompanionTable(companions) {
-    const tbody = document.querySelector('#companions .table tbody');
+    const tbody = document.getElementById('companionTableBody');
     if (!tbody) return;
 
     tbody.innerHTML = '';
 
     if (!companions || companions.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: #999;">暂无陪玩师数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 20px; color: #999;">暂无陪玩师数据</td></tr>';
         return;
     }
 
@@ -540,14 +560,17 @@ function renderCompanionTable(companions) {
         const price = companion.price ? `¥${companion.price}` : '-';
         const gameTypes = companion.gameTypes || '-';
         const rating = companion.rating ? companion.rating.toFixed(1) : '-';
+        const isOnline = companion.isOnline;
+        const statusHtml = isOnline ? '<span class="status online">在线</span>' : '<span class="status offline">离线</span>';
 
         tr.innerHTML = `
-            <td>${avatar ? `<img src="${avatar}" alt="头像" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" onerror="handleImageError(this)">` : ''}</td>
+            <td>${avatar ? `<img src="${avatar}" alt="头像" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" onerror="handleImageError(this)">` : '<div style="width: 40px; height: 40px;"></div>'}</td>
             <td>${escapeHtml(companion.nickname)}</td>
             <td>${escapeHtml(tags)}</td>
             <td>${price}</td>
             <td>${escapeHtml(gameTypes)}</td>
             <td>${rating}</td>
+            <td>${statusHtml}</td>
             <td>
                 <button class="btn-icon" onclick="editCompanion(${companion.id})" title="编辑">
                     <i class="fa fa-pencil"></i>
@@ -866,6 +889,7 @@ async function saveCompanion() {
     const rating = document.getElementById('addCompanionRating').value;
     const ranks = document.getElementById('addCompanionRanks').value.trim();
     const servers = document.getElementById('addCompanionServers').value.trim();
+    const isOnline = document.getElementById('addCompanionIsOnline').value;
     
     // 获取文件
     const avatarFile = document.getElementById('addCompanionAvatar_file').files[0];
@@ -883,6 +907,7 @@ async function saveCompanion() {
         formData.append('rating', rating || '');
         formData.append('ranks', ranks || '');
         formData.append('servers', servers || '');
+        formData.append('isOnline', isOnline);
         
         // 如果有头像文件，添加到FormData
         if (avatarFile) {
@@ -919,9 +944,9 @@ async function saveCompanion() {
         // 清空表单
         clearCompanionForm('add');
         
-        // 延迟300ms后刷新列表，确保数据库事务已提交
+        // 延迟300ms后刷新列表，回到第一页
         setTimeout(() => {
-            loadCompanionList();
+            loadCompanionList(1, companionKeyword);
         }, 300);
         
     } catch (error) {
@@ -1037,8 +1062,8 @@ async function updateAdmin() {
         document.getElementById('editAdminAvatar_preview').innerHTML = '';
         document.getElementById('editAdminAvatar').value = '';
         
-        // 刷新管理员列表
-        loadAdminList();
+        // 刷新管理员列表，保持当前页
+        loadAdminList(adminPage, adminKeyword);
         
     } catch (error) {
         alert('更新失败，请检查网络连接');
@@ -1068,8 +1093,8 @@ async function deleteAdmin(id) {
         
         alert('删除成功！');
         
-        // 刷新管理员列表
-        loadAdminList();
+        // 刷新管理员列表，保持当前页
+        loadAdminList(adminPage, adminKeyword);
         
     } catch (error) {
         alert('删除失败，请检查网络连接');
@@ -1114,6 +1139,7 @@ async function editCompanion(id) {
         document.getElementById('editCompanionServers').value = companion.servers || '';
         document.getElementById('editCompanionVoiceIntro').value = companion.voiceIntro || '';
         document.getElementById('editCompanionVideoUrl').value = companion.videoUrl || '';
+        document.getElementById('editCompanionIsOnline').value = companion.isOnline ? 'true' : 'false';
         
         // 先清空头像预览容器（防止显示上一次的数据）
         const avatarPreview = document.getElementById('editCompanionAvatar_preview');
@@ -1229,6 +1255,7 @@ async function updateCompanion() {
         const rating = document.getElementById('editCompanionRating').value;
         const ranks = document.getElementById('editCompanionRanks').value.trim();
         const servers = document.getElementById('editCompanionServers').value.trim();
+        const isOnline = document.getElementById('editCompanionIsOnline').value;
         
         // 获取文件
         const avatarFile = document.getElementById('editCompanionAvatar_file').files[0];
@@ -1245,6 +1272,7 @@ async function updateCompanion() {
         formData.append('rating', rating || '');
         formData.append('ranks', ranks || '');
         formData.append('servers', servers || '');
+        formData.append('isOnline', isOnline);
         
         // 如果有头像文件，添加到FormData
         if (avatarFile) {
@@ -1281,9 +1309,9 @@ async function updateCompanion() {
         // 清空表单
         clearCompanionForm('edit');
         
-        // 延迟300ms后刷新列表
+        // 延迟300ms后刷新当前页
         setTimeout(() => {
-            loadCompanionList();
+            loadCompanionList(companionPage, companionKeyword);
         }, 300);
         
     } catch (error) {
@@ -1314,9 +1342,9 @@ async function deleteCompanion(id) {
         
         alert('删除成功！');
         
-        // 延迟300ms后刷新列表
+        // 延迟300ms后刷新当前页
         setTimeout(() => {
-            loadCompanionList();
+            loadCompanionList(companionPage, companionKeyword);
         }, 300);
         
     } catch (error) {
@@ -1633,22 +1661,8 @@ function removeAddAdminAvatar() {
  */
 async function searchAdmin() {
     const username = document.getElementById('adminSearchInput').value.trim();
-    
-    try {
-        // 调用后端接口，传递用户名参数
-        const url = username ? `/api/v1/admin/admins?username=${encodeURIComponent(username)}` : '/api/v1/admin/admins';
-        const response = await fetch(url);
-        
-        if (response.ok) {
-            const admins = await response.json();
-            renderAdminTable(admins);
-        } else {
-            alert('搜索失败，请重试');
-        }
-    } catch (error) {
-        console.error('搜索管理员失败:', error);
-        alert('搜索失败，请检查网络连接');
-    }
+    // 搜索时重置到第一页
+    loadAdminList(1, username);
 }
 
 /**
@@ -1657,7 +1671,7 @@ async function searchAdmin() {
 function clearAdminSearch() {
     document.getElementById('adminSearchInput').value = '';
     document.getElementById('adminSearchClearBtn').style.display = 'none';
-    loadAdminList();
+    loadAdminList(1, '');
 }
 
 // 监听搜索框输入，显示/隐藏清空按钮
@@ -1687,24 +1701,8 @@ document.addEventListener('DOMContentLoaded', function() {
  */
 async function searchCompanion() {
     const keyword = document.getElementById('companionSearchInput').value.trim();
-    
-    try {
-        // 调用后端接口，传递关键字参数
-        const url = keyword ? `/api/v1/admin/companions?keyword=${encodeURIComponent(keyword)}` : '/api/v1/admin/companions';
-        const response = await fetch(url);
-        
-        if (response.ok) {
-            const result = await response.json();
-            const companions = result.data || [];
-            
-            renderCompanionTable(companions);
-        } else {
-            alert('搜索失败，请重试');
-        }
-    } catch (error) {
-        console.error('搜索陪玩师失败:', error);
-        alert('搜索失败，请检查网络连接');
-    }
+    // 搜索时重置到第一页
+    loadCompanionList(1, keyword);
 }
 
 /**
@@ -1713,19 +1711,30 @@ async function searchCompanion() {
 function clearCompanionSearch() {
     document.getElementById('companionSearchInput').value = '';
     document.getElementById('companionSearchClearBtn').style.display = 'none';
-    
-    loadCompanionList();
+    loadCompanionList(1, '');
 }
 
 /**
- * 加载管理员列表
+ * 加载管理员列表（分页）
  */
-async function loadAdminList() {
+async function loadAdminList(page = 1, keyword = '') {
+    adminPage = page;
+    adminKeyword = keyword;
+    
     try {
-        const response = await fetch('/api/v1/admin/admins');
+        let url = `/api/v1/admin/admins?page=${page}&size=${adminPageSize}`;
+        if (keyword) {
+            url += `&username=${encodeURIComponent(keyword)}`;
+        }
+        
+        const response = await fetch(url);
         if (response.ok) {
-            const admins = await response.json();
-            renderAdminTable(admins);
+            const result = await response.json();
+            if (result.code === 200) {
+                renderAdminTable(result.data);
+                adminTotal = result.total || 0;
+                renderPagination('admins', result.page, Math.ceil(result.total / adminPageSize), result.total);
+            }
         }
     } catch (error) {
         console.error('加载管理员列表失败:', error);
@@ -1737,7 +1746,7 @@ async function loadAdminList() {
  * @param {Array} admins - 管理员列表数据
  */
 function renderAdminTable(admins) {
-    const tbody = document.querySelector('#admins .table tbody');
+    const tbody = document.getElementById('adminTableBody');
     if (!tbody) return;
     
     tbody.innerHTML = '';
@@ -1754,10 +1763,10 @@ function renderAdminTable(admins) {
         const avatar = admin.avatar || ''; // 没有头像时显示空
         
         tr.innerHTML = `
-            <td>${avatar ? `<img src="${avatar}" alt="头像" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" onerror="handleImageError(this)">` : ''}</td>
-            <td>${escapeHtml(admin.username)}</td>
-            <td><span class="badge ${roleClass}">${roleText}</span></td>
-            <td>
+            <td style="width: 20%">${avatar ? `<img src="${avatar}" alt="头像" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;" onerror="handleImageError(this)">` : ''}</td>
+            <td style="width: 30%">${escapeHtml(admin.username)}</td>
+            <td style="width: 30%"><span class="badge ${roleClass}">${roleText}</span></td>
+            <td style="width: 20%">
                 <button class="btn-icon" onclick="editAdmin(${admin.id})" title="编辑">
                     <i class="fa fa-pencil"></i>
                 </button>
@@ -1768,6 +1777,128 @@ function renderAdminTable(admins) {
         `;
         tbody.appendChild(tr);
     });
+}
+
+/**
+ * 渲染分页控件
+ * @param {string} type - 类型: 'companions' 或 'admins'
+ * @param {number} currentPage - 当前页码
+ * @param {number} totalPages - 总页数
+ * @param {number} totalItems - 总条数
+ */
+function renderPagination(type, currentPage, totalPages, totalItems) {
+    const paginationId = type === 'companions' ? 'companionPagination' : 'adminPagination';
+    const pageNumbersId = type === 'companions' ? 'companionPageNumbers' : 'adminPageNumbers';
+    const infoId = type === 'companions' ? 'companionPaginationInfo' : 'adminPaginationInfo';
+    
+    const pagination = document.getElementById(paginationId);
+    const pageNumbers = document.getElementById(pageNumbersId);
+    const paginationInfo = document.getElementById(infoId);
+    
+    if (!pagination || !pageNumbers || !paginationInfo) return;
+    
+    // 更新分页信息
+    const startItem = (currentPage - 1) * (type === 'companions' ? companionPageSize : adminPageSize) + 1;
+    const endItem = Math.min(currentPage * (type === 'companions' ? companionPageSize : adminPageSize), totalItems);
+    paginationInfo.textContent = `共 ${totalItems} 条记录，第 ${startItem}-${endItem} 条`;
+    
+    // 渲染页码按钮
+    pageNumbers.innerHTML = '';
+    
+    // 强制显示分页组件，确保可见
+    pagination.style.display = 'flex';
+    pagination.style.visibility = 'visible';
+    pagination.style.opacity = '1';
+    
+    // 同时确保分页容器也显示
+    const paginationWrapper = pagination.closest('.pagination-wrapper');
+    if (paginationWrapper) {
+        paginationWrapper.style.display = 'flex';
+        paginationWrapper.style.visibility = 'visible';
+        paginationWrapper.style.opacity = '1';
+    }
+    
+    // 即使只有1页也显示页码按钮
+    if (totalPages <= 1) {
+        addPageNumber(pageNumbers, 1, type, true);
+    } else {
+        // 计算要显示的页码范围
+        let startPage = Math.max(1, currentPage - 2);
+        let endPage = Math.min(totalPages, currentPage + 2);
+        
+        // 确保至少显示5个页码（如果有足够的页数）
+        if (endPage - startPage < 4) {
+            if (startPage === 1) {
+                endPage = Math.min(5, totalPages);
+            } else if (endPage === totalPages) {
+                startPage = Math.max(1, totalPages - 4);
+            }
+        }
+        
+        // 添加第一页和省略号
+        if (startPage > 1) {
+            addPageNumber(pageNumbers, 1, type);
+            if (startPage > 2) {
+                addEllipsis(pageNumbers);
+            }
+        }
+        
+        // 添加中间的页码
+        for (let i = startPage; i <= endPage; i++) {
+            addPageNumber(pageNumbers, i, type, i === currentPage);
+        }
+        
+        // 添加省略号和最后一页
+        if (endPage < totalPages) {
+            if (endPage < totalPages - 1) {
+                addEllipsis(pageNumbers);
+            }
+            addPageNumber(pageNumbers, totalPages, type);
+        }
+    }
+    
+    // 更新上一页/下一页按钮状态
+    const prevBtn = pagination.querySelector('.pagination-prev');
+    const nextBtn = pagination.querySelector('.pagination-next');
+    if (prevBtn) {
+        prevBtn.disabled = currentPage <= 1;
+    }
+    if (nextBtn) {
+        nextBtn.disabled = currentPage >= totalPages;
+    }
+}
+
+/**
+ * 添加页码按钮
+ */
+function addPageNumber(container, pageNum, type, isActive = false) {
+    const btn = document.createElement('button');
+    btn.className = 'pagination-number' + (isActive ? ' active' : '');
+    btn.textContent = pageNum;
+    btn.onclick = () => goToPage(type, pageNum);
+    container.appendChild(btn);
+}
+
+/**
+ * 添加省略号
+ */
+function addEllipsis(container) {
+    const ellipsis = document.createElement('span');
+    ellipsis.textContent = '...';
+    ellipsis.style.padding = '0 4px';
+    ellipsis.style.color = '#6b7280';
+    container.appendChild(ellipsis);
+}
+
+/**
+ * 跳转到指定页码
+ */
+function goToPage(type, pageNum) {
+    if (type === 'companions') {
+        loadCompanionList(pageNum, companionKeyword);
+    } else if (type === 'admins') {
+        loadAdminList(pageNum, adminKeyword);
+    }
 }
 
 /**
@@ -1839,8 +1970,8 @@ async function saveAdmin() {
         document.getElementById('addAdminAvatar_file').value = '';
         document.getElementById('addAdminAvatar_preview').innerHTML = '';
         
-        // 刷新管理员列表
-        loadAdminList();
+        // 刷新管理员列表，回到第一页
+        loadAdminList(1, adminKeyword);
         
     } catch (error) {
         console.error('保存管理员失败:', error);

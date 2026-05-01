@@ -36,6 +36,9 @@
     <!-- AOS Animation Library -->
     <link href="lib/aos.css" rel="stylesheet">
     <script src="lib/aos.js"></script>
+    <!-- Swiper.js -->
+    <link href="lib/swiper-bundle.min.css" rel="stylesheet">
+    <script src="lib/swiper-bundle.min.js"></script>
 
     <!-- 自定义样式 -->
     <link rel="stylesheet" href="css/styles.css">
@@ -150,92 +153,37 @@
                 <button class="filter-btn active px-4 py-2 rounded-full bg-gray-200 dark:bg-dark-100 hover:bg-primary hover:text-white transition-colors" data-filter="all">
                     全部
                 </button>
-                <button class="filter-btn px-4 py-2 rounded-full bg-gray-200 dark:bg-dark-100 hover:bg-primary hover:text-white transition-colors" data-filter="ui">
+                <button class="filter-btn px-4 py-2 rounded-full bg-gray-200 dark:bg-dark-100 hover:bg-primary hover:text-white transition-colors" data-filter="王者荣耀">
                     王者荣耀
                 </button>
-                <button class="filter-btn px-4 py-2 rounded-full bg-gray-200 dark:bg-dark-100 hover:bg-primary hover:text-white transition-colors" data-filter="photography">
+                <button class="filter-btn px-4 py-2 rounded-full bg-gray-200 dark:bg-dark-100 hover:bg-primary hover:text-white transition-colors" data-filter="英雄联盟">
                     英雄联盟
                 </button>
-                <button class="filter-btn px-4 py-2 rounded-full bg-gray-200 dark:bg-dark-100 hover:bg-primary hover:text-white transition-colors" data-filter="illustration">
-                    绝地求生
+                <button class="filter-btn px-4 py-2 rounded-full bg-gray-200 dark:bg-dark-100 hover:bg-primary hover:text-white transition-colors" data-filter="三角洲">
+                    三角洲
                 </button>
-                <button class="filter-btn px-4 py-2 rounded-full bg-gray-200 dark:bg-dark-100 hover:bg-primary hover:text-white transition-colors" data-filter="web">
+                <button class="filter-btn px-4 py-2 rounded-full bg-gray-200 dark:bg-dark-100 hover:bg-primary hover:text-white transition-colors" data-filter="其他游戏">
                     其他游戏
                 </button>
             </div>
             
-            <!-- Projects Grid -->
-            <div class="gallery-grid">
-                <!-- Project 1 -->
-                <div class="project-card group" data-category="ui" data-aos="fade-up" data-aos-delay="150">
-                    <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/b956b28200804ab58c65c339b8a81861~tplv-a9rns2rl98-image.image?lk3s=8e244e95&amp;rcl=2026040416222170BADBD524E81C6E41B0&amp;rrcfp=f06b921b&amp;x-expires=1777882967&amp;x-signature=tLV2VMhBnqfxgfCy0j5g3HYpp6A%3D" alt="Mobile App UI Design" class="w-full h-64 object-cover transition-transform duration-500">
-                    <div class="project-overlay">
-                        <h3 class="text-xl font-bold text-white mb-2">王者荣耀精彩操作</h3>
-                        <p class="text-gray-200 mb-4 line-clamp-2">S35赛季王者段位精彩操作集锦，展示各种高光时刻和极限操作。</p>
-                        <button class="view-project px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors" data-id="1">
-                            查看详情
-                        </button>
+            <!-- 陪玩师轮播展示区 -->
+            <div class="relative">
+                <!-- Swiper 容器 -->
+                <div class="swiper companion-swiper">
+                    <div class="swiper-wrapper gallery-grid">
+                        <!-- 数据由 main.js 中的 loadCompanionsList() 动态渲染 -->
                     </div>
+                    
+                    <!-- 分页器 -->
+                    <div class="swiper-pagination"></div>
                 </div>
                 
-                <!-- Project 2 -->
-                <div class="project-card group" data-category="photography" data-aos="fade-up" data-aos-delay="200">
-                    <img src="https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/e3494d22c7c140048484aa0f2bc04ee9~tplv-a9rns2rl98-image.image?lk3s=8e244e95&amp;rcl=2026040416222170BADBD524E81C6E41B0&amp;rrcfp=f06b921b&amp;x-expires=1777882959&amp;x-signature=HEkX%2FEECzcd%2FRQ5a5aUFvDqcFs8%3D" alt="Urban Landscape Photography" class="w-full h-64 object-cover transition-transform duration-500">
-                    <div class="project-overlay">
-                        <h3 class="text-xl font-bold text-white mb-2">英雄联盟高光时刻</h3>
-                        <p class="text-gray-200 mb-4 line-clamp-2">峡谷之巅超凡大师段位精彩操作，劫、亚索等英雄的完美连招展示。</p>
-                        <button class="view-project px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors" data-id="2">
-                            查看详情
-                        </button>
-                    </div>
-                </div>
+                <!-- 左箭头按钮 -->
+                <button class="swiper-button-prev"></button>
                 
-                <!-- Project 3 -->
-                <div class="project-card group" data-category="illustration" data-aos="fade-up" data-aos-delay="250">
-                    <img src="https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/09e8de031da44b17af8bfe7bad75a996~tplv-a9rns2rl98-image.image?lk3s=8e244e95&amp;rcl=2026040416222170BADBD524E81C6E41B0&amp;rrcfp=f06b921b&amp;x-expires=1777882964&amp;x-signature=5lvLrXg9mAIjACiYLBPwRVaO1Nw%3D" alt="Fantasy Digital Illustration" class="w-full h-64 object-cover transition-transform duration-500">
-                    <div class="project-overlay">
-                        <h3 class="text-xl font-bold text-white mb-2">绝地求生击杀集锦</h3>
-                        <p class="text-gray-200 mb-4 line-clamp-2">海岛雨林地图多次皇冠局四排击杀集锦，枪法精准意识一流。</p>
-                        <button class="view-project px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors" data-id="3">
-                            查看详情
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Project 4 -->
-                <div class="project-card group" data-category="web" data-aos="fade-up" data-aos-delay="300">
-                    <img src="https://p26-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/fd7b521a9e5b4333917cc1a850a49f24~tplv-a9rns2rl98-image.image?lk3s=8e244e95&amp;rcl=2026040416222170BADBD524E81C6E41B0&amp;rrcfp=f06b921b&amp;x-expires=1777882960&amp;x-signature=moU722FeDiP%2BXGQ9yvbbkhnOwQ0%3D" alt="Dark Mode Dashboard" class="w-full h-64 object-cover transition-transform duration-500">
-                    <div class="project-overlay">
-                        <h3 class="text-xl font-bold text-white mb-2">永劫无间天梯对战</h3>
-                        <p class="text-gray-200 mb-4 line-clamp-2">火罗国修罗段位实战演示，刀法身法展现极致操作。</p>
-                        <button class="view-project px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors" data-id="4">
-                            查看详情
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Project 5 -->
-                <div class="project-card group" data-category="photography" data-aos="fade-up" data-aos-delay="350">
-                    <img src="https://p11-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc/pc/super_tool/d10ac5dff6eb4ebc9962cca05fa5238d~tplv-a9rns2rl98-image.image?lk3s=8e244e95&amp;rcl=2026040416222170BADBD524E81C6E41B0&amp;rrcfp=f06b921b&amp;x-expires=1777882958&amp;x-signature=XafzqHP1vnayeu7%2B0%2B9giZs6HOw%3D" alt="Creative Portrait Photography" class="w-full h-64 object-cover transition-transform duration-500">
-                    <div class="project-overlay">
-                        <h3 class="text-xl font-bold text-white mb-2">蛋仔派对趣味时刻</h3>
-                        <p class="text-gray-200 mb-4 line-clamp-2">欢乐蛋仔闯关集锦，各类趣味玩法和搞笑瞬间合集。</p>
-                        <button class="view-project px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors" data-id="5">
-                            查看详情
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Project 6 - Placeholder for future project -->
-                <div class="project-card group" data-category="ui" data-aos="fade-up" data-aos-delay="400">
-                    <div class="w-full h-64 bg-gray-200 dark:bg-dark-100 flex items-center justify-center">
-                        <div class="text-center p-6">
-                            <i class="fa fa-plus-circle text-4xl text-gray-400 dark:text-gray-600 mb-4" aria-hidden="true"></i>
-                            <h3 class="text-xl font-bold text-gray-700 dark:text-gray-300 mb-2">即将推出</h3>
-                            <p class="text-gray-500 dark:text-gray-400">更多精彩陪玩内容即将上线。</p>
-                        </div>
-                    </div>
-                </div>
+                <!-- 右箭头按钮 -->
+                <button class="swiper-button-next"></button>
             </div>
         </div>
     </section>

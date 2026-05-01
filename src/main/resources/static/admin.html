@@ -102,13 +102,13 @@
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title">陪玩师列表</h2>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <div style="position: relative;">
-                                <input type="text" id="companionSearchInput" placeholder="搜索昵称、标签、游戏类型..." style="padding: 8px 32px 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px; width: 250px; outline: none;" onkeypress="if(event.key==='Enter') searchCompanion()" onblur="searchCompanion()">
-                                <button onclick="clearCompanionSearch()" id="companionSearchClearBtn" style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #9ca3af; font-size: 14px; padding: 0; display: none; line-height: 1; width: 14px; height: 14px;" onmouseover="this.style.color='#6b7280'" onmouseout="this.style.color='#9ca3af'" title="清空搜索">
-                                    <div style="position: relative; width: 100%; height: 100%;">
-                                        <div style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1px; background: currentColor; transform: translate(-50%, -50%) rotate(45deg);"></div>
-                                        <div style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1px; background: currentColor; transform: translate(-50%, -50%) rotate(-45deg);"></div>
+                        <div class="card-header-actions">
+                            <div class="search-container">
+                                <input type="text" id="companionSearchInput" placeholder="搜索昵称、标签、游戏类型..." class="search-input" onkeypress="if(event.key==='Enter') searchCompanion()" onblur="searchCompanion()">
+                                <button onclick="clearCompanionSearch()" id="companionSearchClearBtn" class="search-clear-btn" title="清空搜索">
+                                    <div class="search-clear-icon">
+                                        <div class="search-clear-line-1"></div>
+                                        <div class="search-clear-line-2"></div>
                                     </div>
                                 </button>
                             </div>
@@ -118,21 +118,39 @@
                         </div>
                     </div>
                     
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>头像</th>
-                                <th>昵称</th>
-                                <th>标签</th>
-                                <th>价格</th>
-                                <th>游戏类型</th>
-                                <th>评分</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
+                    <!-- 表格容器 -->
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 10%;">头像</th>
+                                    <th style="width: 10%;">昵称</th>
+                                    <th style="width: 20%;">标签</th>
+                                    <th style="width: 8%;">价格</th>
+                                    <th style="width: 20%;">游戏类型</th>
+                                    <th style="width: 7%;">评分</th>
+                                    <th style="width: 8%;">状态</th>
+                                    <th style="width: 17%;">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="companionTableBody">
+                            </tbody>
+                        </table>
+                        
+                        <!-- 分页控件 -->
+                        <div class="pagination-wrapper">
+                            <div class="pagination" id="companionPagination">
+                                <button class="pagination-btn pagination-prev" onclick="goToPage('companions', companionPage - 1)">
+                                    <i class="fa fa-angle-left"></i>
+                                </button>
+                                <div class="pagination-numbers" id="companionPageNumbers"></div>
+                                <button class="pagination-btn pagination-next" onclick="goToPage('companions', companionPage + 1)">
+                                    <i class="fa fa-angle-right"></i>
+                                </button>
+                            </div>
+                            <div class="pagination-info" id="companionPaginationInfo"></div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -173,13 +191,13 @@
                 <div class="card">
                     <div class="card-header">
                         <h2 class="card-title">管理员列表</h2>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <div style="position: relative;">
-                                <input type="text" id="adminSearchInput" placeholder="搜索用户名..." style="padding: 8px 32px 8px 12px; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 14px; width: 200px; outline: none;" onkeypress="if(event.key==='Enter') searchAdmin()" onblur="searchAdmin()">
-                                <button onclick="clearAdminSearch()" id="adminSearchClearBtn" style="position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; color: #9ca3af; font-size: 14px; padding: 0; display: none; line-height: 1; width: 14px; height: 14px;" onmouseover="this.style.color='#6b7280'" onmouseout="this.style.color='#9ca3af'" title="清空搜索">
-                                    <div style="position: relative; width: 100%; height: 100%;">
-                                        <div style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1px; background: currentColor; transform: translate(-50%, -50%) rotate(45deg);"></div>
-                                        <div style="position: absolute; left: 50%; top: 50%; width: 10px; height: 1px; background: currentColor; transform: translate(-50%, -50%) rotate(-45deg);"></div>
+                        <div class="card-header-actions">
+                            <div class="search-container">
+                                <input type="text" id="adminSearchInput" placeholder="搜索用户名..." class="search-input" onkeypress="if(event.key==='Enter') searchAdmin()" onblur="searchAdmin()">
+                                <button onclick="clearAdminSearch()" id="adminSearchClearBtn" class="search-clear-btn" title="清空搜索">
+                                    <div class="search-clear-icon">
+                                        <div class="search-clear-line-1"></div>
+                                        <div class="search-clear-line-2"></div>
                                     </div>
                                 </button>
                             </div>
@@ -189,20 +207,37 @@
                         </div>
                     </div>
                     
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>头像</th>
-                                <th>用户名</th>
-                                <th>角色</th>
-                                <!-- <th>权限</th> -->
-                                <!-- <th>状态</th> -->
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
+                    <!-- 表格容器 -->
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 20%">头像</th>
+                                    <th style="width: 30%">用户名</th>
+                                    <th style="width: 30%">角色</th>
+                                    <!-- <th>权限</th> -->
+                                    <!-- <th>状态</th> -->
+                                    <th style="width: 20%">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="adminTableBody">
+                            </tbody>
+                        </table>
+                        
+                        <!-- 分页控件 -->
+                        <div class="pagination-wrapper">
+                            <div class="pagination" id="adminPagination">
+                                <button class="pagination-btn pagination-prev" onclick="goToPage('admins', adminPage - 1)">
+                                    <i class="fa fa-angle-left"></i>
+                                </button>
+                                <div class="pagination-numbers" id="adminPageNumbers"></div>
+                                <button class="pagination-btn pagination-next" onclick="goToPage('admins', adminPage + 1)">
+                                    <i class="fa fa-angle-right"></i>
+                                </button>
+                            </div>
+                            <div class="pagination-info" id="adminPaginationInfo"></div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -352,6 +387,13 @@
                     </div>
                 </div>
                 <div class="form-group">
+                    <label>在线状态</label>
+                    <select class="form-control" id="addCompanionIsOnline">
+                        <option value="true">在线</option>
+                        <option value="false">离线</option>
+                    </select>
+                </div>
+                <div class="form-group">
                     <label>简介</label>
                     <textarea class="form-control" id="addCompanionDescription" rows="3" placeholder="请输入陪玩师简介"></textarea>
                 </div>
@@ -434,6 +476,13 @@
                         <label>评分</label>
                         <input type="number" class="form-control" id="editCompanionRating" placeholder="0-100分" step="0.1" min="0" max="100">
                     </div>
+                </div>
+                <div class="form-group">
+                    <label>在线状态</label>
+                    <select class="form-control" id="editCompanionIsOnline">
+                        <option value="true">在线</option>
+                        <option value="false">离线</option>
+                    </select>
                 </div>
                 <div class="form-group">
                     <label>简介</label>
